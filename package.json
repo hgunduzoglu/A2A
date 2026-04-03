@@ -1,0 +1,17 @@
+{
+  "name": "a2a",
+  "version": "1.0.0",
+  "private": true,
+  "description": "AI Agent Marketplace App — ETHGlobal Cannes 2026 Hackathon Project",
+  "workspaces": [
+    "web",
+    "contracts"
+  ],
+  "scripts": {
+    "dev": "npm run dev -w ./web",
+    "build": "npm run build -w ./web",
+    "lint": "npm run lint -w ./web",
+    "contracts:compile": "fnm exec --using=22 npm run compile -w ./contracts",
+    "contracts:test": "fnm exec --using=22 npm run test -w ./contracts"
+  }
+}
