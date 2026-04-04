@@ -1,5 +1,6 @@
 'use client';
 
+import { MiniKit } from '@worldcoin/minikit-js';
 import { useState, useTransition } from 'react';
 
 type AgentFormState = {
@@ -70,6 +71,12 @@ export function AgentCreateForm({ nullifier }: AgentCreateFormProps) {
     setResult(null);
 
     startTransition(async () => {
+      try {
+        await MiniKit.sendHapticFeedback({
+          hapticsType: 'selection-changed',
+        });
+      } catch {}
+
       const response = await fetch('/api/register-agent', {
         method: 'POST',
         headers: {
@@ -87,9 +94,23 @@ export function AgentCreateForm({ nullifier }: AgentCreateFormProps) {
       const payload = (await response.json()) as RegisterAgentResponse;
 
       if (!response.ok || !payload.ok) {
+        try {
+          await MiniKit.sendHapticFeedback({
+            hapticsType: 'notification',
+            style: 'error',
+          });
+        } catch {}
+
         setError(payload.message ?? 'Unable to register agent.');
         return;
       }
+
+      try {
+        await MiniKit.sendHapticFeedback({
+          hapticsType: 'notification',
+          style: 'success',
+        });
+      } catch {}
 
       setResult(payload);
     });
@@ -97,16 +118,19 @@ export function AgentCreateForm({ nullifier }: AgentCreateFormProps) {
 
   return (
     <div className="space-y-6">
-      <div className="rounded-3xl border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-900">
+      <div className="rounded-[28px] border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-900">
         Verified human session is active.
         <div className="mt-2 break-all font-mono text-xs">{nullifier}</div>
       </div>
 
-      <form className="grid gap-4" onSubmit={handleSubmit}>
+      <form
+        className="grid gap-4 rounded-[32px] border border-[var(--line)] bg-[var(--surface)] p-5 shadow-[0_18px_40px_rgba(19,34,28,0.06)] backdrop-blur-xl"
+        onSubmit={handleSubmit}
+      >
         <label className="grid gap-2">
-          <span className="text-sm font-medium text-neutral-800">Agent name</span>
+          <span className="text-sm font-medium text-slate-800">Agent name</span>
           <input
-            className="rounded-2xl border border-neutral-300 px-4 py-3 outline-none transition focus:border-neutral-950"
+            className="rounded-[22px] border border-slate-200 bg-white/80 px-4 py-3 outline-none transition focus:border-slate-950"
             onChange={(event) => updateField('name', event.target.value)}
             placeholder="MarketAnalyzer"
             required
@@ -115,9 +139,9 @@ export function AgentCreateForm({ nullifier }: AgentCreateFormProps) {
         </label>
 
         <label className="grid gap-2">
-          <span className="text-sm font-medium text-neutral-800">Category</span>
+          <span className="text-sm font-medium text-slate-800">Category</span>
           <select
-            className="rounded-2xl border border-neutral-300 px-4 py-3 outline-none transition focus:border-neutral-950"
+            className="rounded-[22px] border border-slate-200 bg-white/80 px-4 py-3 outline-none transition focus:border-slate-950"
             onChange={(event) => updateField('category', event.target.value)}
             value={form.category}
           >
@@ -130,9 +154,9 @@ export function AgentCreateForm({ nullifier }: AgentCreateFormProps) {
         </label>
 
         <label className="grid gap-2">
-          <span className="text-sm font-medium text-neutral-800">Description</span>
+          <span className="text-sm font-medium text-slate-800">Description</span>
           <textarea
-            className="min-h-28 rounded-2xl border border-neutral-300 px-4 py-3 outline-none transition focus:border-neutral-950"
+            className="min-h-28 rounded-[22px] border border-slate-200 bg-white/80 px-4 py-3 outline-none transition focus:border-slate-950"
             onChange={(event) => updateField('description', event.target.value)}
             placeholder="Real-time crypto market analysis with sentiment scoring."
             required
@@ -141,9 +165,9 @@ export function AgentCreateForm({ nullifier }: AgentCreateFormProps) {
         </label>
 
         <label className="grid gap-2">
-          <span className="text-sm font-medium text-neutral-800">API endpoint</span>
+          <span className="text-sm font-medium text-slate-800">API endpoint</span>
           <input
-            className="rounded-2xl border border-neutral-300 px-4 py-3 outline-none transition focus:border-neutral-950"
+            className="rounded-[22px] border border-slate-200 bg-white/80 px-4 py-3 outline-none transition focus:border-slate-950"
             onChange={(event) => updateField('endpoint', event.target.value)}
             placeholder="https://api.example.com/analyze"
             required
@@ -153,9 +177,9 @@ export function AgentCreateForm({ nullifier }: AgentCreateFormProps) {
         </label>
 
         <label className="grid gap-2">
-          <span className="text-sm font-medium text-neutral-800">Price per request</span>
+          <span className="text-sm font-medium text-slate-800">Price per request</span>
           <input
-            className="rounded-2xl border border-neutral-300 px-4 py-3 outline-none transition focus:border-neutral-950"
+            className="rounded-[22px] border border-slate-200 bg-white/80 px-4 py-3 outline-none transition focus:border-slate-950"
             inputMode="decimal"
             onChange={(event) => updateField('price', event.target.value)}
             required
@@ -164,9 +188,9 @@ export function AgentCreateForm({ nullifier }: AgentCreateFormProps) {
         </label>
 
         <label className="grid gap-2">
-          <span className="text-sm font-medium text-neutral-800">Capabilities</span>
+          <span className="text-sm font-medium text-slate-800">Capabilities</span>
           <input
-            className="rounded-2xl border border-neutral-300 px-4 py-3 outline-none transition focus:border-neutral-950"
+            className="rounded-[22px] border border-slate-200 bg-white/80 px-4 py-3 outline-none transition focus:border-slate-950"
             onChange={(event) => updateField('capabilities', event.target.value)}
             placeholder="market-analysis, sentiment"
             value={form.capabilities}
@@ -174,7 +198,7 @@ export function AgentCreateForm({ nullifier }: AgentCreateFormProps) {
         </label>
 
         <button
-          className="mt-2 rounded-full bg-neutral-950 px-5 py-3 text-sm font-medium text-white disabled:cursor-not-allowed disabled:bg-neutral-400"
+          className="mt-2 rounded-[22px] bg-slate-950 px-5 py-3 text-sm font-medium text-white transition disabled:cursor-not-allowed disabled:bg-slate-400"
           disabled={isPending}
           type="submit"
         >
@@ -183,14 +207,14 @@ export function AgentCreateForm({ nullifier }: AgentCreateFormProps) {
       </form>
 
       {error ? (
-        <div className="rounded-3xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">
+        <div className="rounded-[28px] border border-red-200 bg-red-50 p-4 text-sm text-red-700">
           {error}
         </div>
       ) : null}
 
       {result?.agent ? (
-        <div className="rounded-3xl border border-neutral-200 bg-white p-5 text-sm text-neutral-700 shadow-sm">
-          <p className="font-semibold text-neutral-950">
+        <div className="rounded-[32px] border border-[var(--line)] bg-[var(--surface)] p-5 text-sm text-slate-700 shadow-[0_18px_40px_rgba(19,34,28,0.06)] backdrop-blur-xl">
+          <p className="font-semibold text-slate-950">
             {result.message ?? 'Agent registered successfully.'}
           </p>
           <p className="mt-2">ENS name: {result.agent.ensName}</p>

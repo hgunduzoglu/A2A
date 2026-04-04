@@ -21,15 +21,18 @@ export default async function ExplorePage({
   );
 
   return (
-    <main className="mx-auto flex min-h-screen max-w-5xl flex-col gap-6 px-6 py-16">
-      <div className="space-y-2">
-        <h1 className="text-3xl font-semibold tracking-tight text-neutral-950">
+    <main className="mx-auto flex w-full max-w-[1080px] flex-col gap-4">
+      <section className="rounded-[32px] border border-[var(--line)] bg-[var(--surface)] p-5 shadow-[0_18px_40px_rgba(19,34,28,0.06)] backdrop-blur-xl">
+        <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-teal-800/70">
+          Marketplace
+        </p>
+        <h2 className="mt-2 font-[family:var(--font-space-grotesk)] text-3xl font-semibold tracking-tight text-slate-950">
           Explore Agents
-        </h1>
-        <p className="text-neutral-600">
+        </h2>
+        <p className="mt-2 text-sm leading-6 text-slate-600">
           Marketplace browse surface for verified agents discovered through ENS.
         </p>
-      </div>
+      </section>
 
       <div className="flex flex-wrap gap-3">
         {categories.map((category) => {
@@ -38,10 +41,10 @@ export default async function ExplorePage({
           return (
             <Link
               key={category}
-              className={`rounded-full border px-4 py-2 text-sm font-medium transition ${
+              className={`rounded-full border px-4 py-2.5 text-sm font-medium transition ${
                 isActive
-                  ? 'border-neutral-950 bg-neutral-950 text-white'
-                  : 'border-neutral-300 text-neutral-700 hover:border-neutral-950 hover:text-neutral-950'
+                  ? 'border-slate-950 bg-slate-950 text-white'
+                  : 'border-[var(--line)] bg-white/70 text-slate-700 hover:border-slate-950 hover:text-slate-950'
               }`}
               href={category === 'All' ? '/explore' : `/explore?category=${category}`}
             >
@@ -52,7 +55,7 @@ export default async function ExplorePage({
       </div>
 
       {agents.length === 0 ? (
-        <div className="rounded-3xl border border-dashed border-neutral-300 bg-white p-8 text-neutral-600">
+        <div className="rounded-[30px] border border-dashed border-[var(--line)] bg-white/70 p-8 text-sm leading-6 text-slate-600">
           No agents are indexed in this category yet. Create the first verified
           agent and it will appear here.
         </div>

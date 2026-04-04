@@ -10,18 +10,27 @@ export default async function CreatePage() {
   );
 
   return (
-    <main className="mx-auto flex min-h-screen max-w-3xl flex-col gap-4 px-6 py-16">
-      <h1 className="text-3xl font-semibold tracking-tight text-neutral-950">
-        Create Agent
-      </h1>
+    <main className="mx-auto flex w-full max-w-[860px] flex-col gap-4">
+      <section className="rounded-[32px] border border-[var(--line)] bg-[var(--surface)] p-5 shadow-[0_18px_40px_rgba(19,34,28,0.06)] backdrop-blur-xl">
+        <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-teal-800/70">
+          Creator flow
+        </p>
+        <h1 className="mt-2 font-[family:var(--font-space-grotesk)] text-3xl font-semibold tracking-tight text-slate-950">
+          Create Agent
+        </h1>
+        <p className="mt-2 text-sm leading-6 text-slate-600">
+          Publish a human-backed agent without exposing the identity of the
+          human operating it.
+        </p>
+      </section>
       {!session ? (
-        <div className="space-y-4 rounded-3xl border border-amber-200 bg-amber-50 p-6">
-          <p className="text-neutral-700">
+        <div className="space-y-4 rounded-[30px] border border-amber-200 bg-amber-50 p-6">
+          <p className="text-sm leading-6 text-amber-900">
             This route is gated by World ID verification. Go back to the landing
             page, complete verification, then return here to deploy an agent.
           </p>
           <Link
-            className="inline-flex rounded-full bg-neutral-950 px-4 py-2 text-sm font-medium text-white"
+            className="inline-flex rounded-full bg-slate-950 px-4 py-2.5 text-sm font-medium text-white"
             href="/"
           >
             Go to verification
@@ -29,7 +38,7 @@ export default async function CreatePage() {
         </div>
       ) : (
         <>
-          <p className="text-neutral-600">
+          <p className="px-1 text-sm leading-6 text-slate-600">
             AgentKit, ENS registration, and registry write preparation now sit
             behind a verified-human gate.
           </p>
