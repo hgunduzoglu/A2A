@@ -1,12 +1,8 @@
 'use client';
 import { MiniKitProvider } from '@worldcoin/minikit-js/minikit-provider';
-import dynamic from 'next/dynamic';
 import type { ReactNode } from 'react';
 
-const ErudaProvider = dynamic(
-  () => import('@/providers/Eruda').then((c) => c.ErudaProvider),
-  { ssr: false },
-);
+const appId = process.env.NEXT_PUBLIC_APP_ID;
 
 // Define props for ClientProviders
 interface ClientProvidersProps {
@@ -29,8 +25,6 @@ export default function ClientProviders({
   children,
 }: ClientProvidersProps) {
   return (
-    <ErudaProvider>
-      <MiniKitProvider>{children}</MiniKitProvider>
-    </ErudaProvider>
+    <MiniKitProvider props={{ appId }}>{children}</MiniKitProvider>
   );
 }
