@@ -8,6 +8,7 @@ import { cookies } from 'next/headers';
 import { NextResponse } from 'next/server';
 
 export async function POST(request: Request) {
+  const parentDomain = process.env.ENS_PARENT_DOMAIN ?? 'a2a.eth';
   const cookieStore = await cookies();
   const session = decodeWorldIdSession(
     cookieStore.get(WORLD_ID_SESSION_COOKIE)?.value,
@@ -28,14 +29,20 @@ export async function POST(request: Request) {
     typeof payload.name === 'string' && payload.name.trim().length > 0
       ? payload.name.trim()
       : 'unnamed-agent';
-  const ensName = `${agentName.toLowerCase().replace(/\s+/g, '')}.a2a.eth`;
+  const ensName = `${agentName.toLowerCase().replace(/\s+/g, '')}.${parentDomain}`;
   const enrichedPayload = {
     ...payload,
     ensName,
     nullifier: session.nullifier,
   };
   const credential = await createAgentCredential(enrichedPayload);
-  const ensRecord = await registerAgentSubname(enrichedPayload);
+  const ensRecord = await registerAgentSubname({
+    ...enrichedPayload,
+    credentialHash:
+      typeof credential.credentialHash === 'string'
+        ? credential.credentialHash
+        : undefined,
+  });
 
   return NextResponse.json({
     ok: true,
