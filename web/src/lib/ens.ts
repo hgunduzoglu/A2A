@@ -4,6 +4,7 @@ import {
   createWalletClient,
   http,
   namehash,
+  zeroAddress,
 } from 'viem';
 import { sepolia } from 'viem/chains';
 import ENSRegistry from '@ensdomains/ens-contracts/deployments/sepolia/ENSRegistry.json';
@@ -20,6 +21,19 @@ type AgentRegistrationInput = Record<string, unknown> & {
   credentialHash?: string;
   category?: string;
 };
+
+const AGENT_TEXT_RECORD_KEYS = [
+  'world-nullifier',
+  'world-verification',
+  'agent-credential',
+  'agent-capabilities',
+  'agent-category',
+  'agent-description',
+  'agent-price',
+  'agent-currency',
+  'payment-address',
+  'agent-endpoint',
+] as const;
 
 function getEnsConfig() {
   return {
@@ -142,7 +156,7 @@ export async function registerAgentSubname(input: AgentRegistrationInput) {
     ['agent-currency', 'USDC'],
     ['payment-address', account.address],
     ['agent-endpoint', getTextRecordValue(input.endpoint)],
-  ] as const;
+  ] as const satisfies readonly (readonly [typeof AGENT_TEXT_RECORD_KEYS[number], string])[];
 
   const textRecordTransactionHashes: `0x${string}`[] = [];
 
@@ -196,10 +210,29 @@ export async function resolveAgentProfile(name: string) {
     args: [node],
   });
 
+  const records =
+    typeof resolver === 'string' && resolver !== zeroAddress
+      ? Object.fromEntries(
+          await Promise.all(
+            AGENT_TEXT_RECORD_KEYS.map(async (key) => {
+              const value = await clients.publicClient.readContract({
+                address: resolver as `0x${string}`,
+                abi: PublicResolver.abi,
+                functionName: 'text',
+                args: [node, key],
+              });
+
+              return [key, String(value)] as const;
+            }),
+          ),
+        )
+      : {};
+
   return {
     name,
     node,
     resolver,
+    records,
     provider: 'ens',
     mode: 'live',
   };

@@ -6,6 +6,7 @@ interface AgentCardProps {
   description: string;
   price: string;
   reputation: string;
+  verifiedHuman?: boolean;
 }
 
 export function AgentCard({
@@ -14,6 +15,7 @@ export function AgentCard({
   description,
   price,
   reputation,
+  verifiedHuman = true,
 }: AgentCardProps) {
   const encodedName = encodeURIComponent(name);
 
@@ -24,6 +26,11 @@ export function AgentCard({
           {category}
         </p>
         <h2 className="text-xl font-semibold text-neutral-950">{name}</h2>
+        {verifiedHuman ? (
+          <p className="text-sm font-medium text-emerald-700">
+            Verified human-backed agent
+          </p>
+        ) : null}
         <p className="text-sm text-neutral-600">{description}</p>
         <div className="flex flex-wrap gap-3 text-sm text-neutral-700">
           <span>{price}</span>

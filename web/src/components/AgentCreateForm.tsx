@@ -22,6 +22,17 @@ type RegisterAgentResponse = {
     capabilities: string[];
     nullifier: string;
   };
+  ensRecord?: {
+    mode?: string;
+    createHash?: string;
+    textRecordTransactionHashes?: string[];
+  };
+  marketplace?: {
+    id: number;
+    status: string;
+    indexedAt: string;
+    agentCountForHuman: number;
+  };
 };
 
 const initialState: AgentFormState = {
@@ -179,12 +190,31 @@ export function AgentCreateForm({ nullifier }: AgentCreateFormProps) {
 
       {result?.agent ? (
         <div className="rounded-3xl border border-neutral-200 bg-white p-5 text-sm text-neutral-700 shadow-sm">
-          <p className="font-semibold text-neutral-950">Agent prepared successfully.</p>
+          <p className="font-semibold text-neutral-950">
+            {result.message ?? 'Agent registered successfully.'}
+          </p>
           <p className="mt-2">ENS name: {result.agent.ensName}</p>
           <p>Category: {result.agent.category}</p>
           <p>Endpoint: {result.agent.endpoint}</p>
           <p>Price: {result.agent.price} USDC</p>
           <p>Capabilities: {result.agent.capabilities.join(', ')}</p>
+          {result.marketplace ? (
+            <p>
+              Marketplace index: {result.marketplace.status} • agent #
+              {result.marketplace.id}
+            </p>
+          ) : null}
+          {result.ensRecord?.createHash ? (
+            <p className="break-all">
+              ENS subname tx: {result.ensRecord.createHash}
+            </p>
+          ) : null}
+          {result.ensRecord?.textRecordTransactionHashes?.length ? (
+            <p>
+              ENS text record txs:{' '}
+              {result.ensRecord.textRecordTransactionHashes.length}
+            </p>
+          ) : null}
         </div>
       ) : null}
     </div>
