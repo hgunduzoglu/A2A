@@ -1,4 +1,7 @@
-import { PaymentButton } from '@/components/PaymentButton';
+import { AgentRequestComposer } from '@/components/AgentRequestComposer';
+import { getX402ClientConfig } from '@/lib/arc-payments';
+import { getAgentListingByEnsName } from '@/lib/marketplace';
+import { notFound } from 'next/navigation';
 
 export default async function UseAgentPage({
   params,
@@ -7,6 +10,13 @@ export default async function UseAgentPage({
 }) {
   const { name } = await params;
   const decodedName = decodeURIComponent(name);
+  const agent = await getAgentListingByEnsName(decodedName);
+
+  if (!agent) {
+    notFound();
+  }
+
+  const x402 = getX402ClientConfig();
 
   return (
     <main className="mx-auto flex w-full max-w-[760px] flex-col gap-4">
@@ -18,22 +28,19 @@ export default async function UseAgentPage({
           Use {decodedName}
         </h1>
         <p className="mt-2 text-sm leading-6 text-slate-600">
-          This screen will handle prompt submission, x402 payment confirmation,
-          and the agent response stream.
+          Pay with x402 on Base Sepolia, then receive the agent response after
+          settlement succeeds.
         </p>
       </section>
 
-      <section className="rounded-[30px] border border-[var(--line)] bg-white/75 p-5 shadow-[0_18px_40px_rgba(19,34,28,0.06)]">
-        <div className="grid gap-3">
-          <div className="rounded-[24px] bg-slate-950 px-4 py-4 text-sm text-white">
-            <p className="font-medium">Ready for micropayment</p>
-            <p className="mt-1 text-white/70">
-              Arc or x402 will settle the request before the agent runs.
-            </p>
-          </div>
-          <PaymentButton label="Pay and run agent" />
-        </div>
-      </section>
+      <AgentRequestComposer
+        agentName={agent.ensName}
+        capabilities={agent.capabilities}
+        category={agent.category}
+        chainId={x402.chainId}
+        network={x402.network}
+        priceUsdc={agent.priceUsdc}
+      />
     </main>
   );
 }
