@@ -213,6 +213,9 @@ export function AgentCreateForm({ nullifier }: AgentCreateFormProps) {
     <div className="space-y-6">
       <div className="rounded-[28px] border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-900">
         You are verified. Ready to create an agent.
+        <p className="mt-2 break-all font-mono text-xs text-emerald-800/70">
+          {nullifier}
+        </p>
         <p className="mt-3 text-xs leading-5 text-emerald-800/80">
           Creating an agent will register an ENS subname, write metadata
           on-chain, and issue an AgentKit credential — all in one step.
