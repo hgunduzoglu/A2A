@@ -16,14 +16,28 @@ interface AgentRequestComposerProps {
   capabilities: string[];
   network: `${string}:${string}`;
   chainId: number;
+  mode?: 'human' | 'agent';
+  callerAgents?: Array<{
+    ensName: string;
+    category: string;
+  }>;
+  targetVerification?: {
+    verificationLevel: string | null;
+    credentialHash: string | null;
+  };
 }
 
 interface RequestServiceSuccess {
   ok: boolean;
   mode: 'x402';
   agent: string;
+  callerAgent?: string | null;
   priceUsdc: string;
   network: string;
+  targetVerification?: {
+    verificationLevel: string | null;
+    credentialHash: string | null;
+  };
   result: {
     summary: string;
     prompt: string;
@@ -57,6 +71,9 @@ export function AgentRequestComposer({
   capabilities,
   network,
   chainId,
+  mode = 'human',
+  callerAgents = [],
+  targetVerification,
 }: AgentRequestComposerProps) {
   const [prompt, setPrompt] = useState(
     'Analyze ETH/USDC sentiment for the last 24 hours.',
@@ -64,6 +81,9 @@ export function AgentRequestComposer({
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<RequestServiceSuccess | null>(null);
   const [paymentTx, setPaymentTx] = useState<string | null>(null);
+  const [callerAgentName, setCallerAgentName] = useState(
+    callerAgents[0]?.ensName ?? '',
+  );
   const [isPending, startTransition] = useTransition();
 
   function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
@@ -119,6 +139,7 @@ export function AgentRequestComposer({
           },
           body: JSON.stringify({
             agentName,
+            callerAgentName: mode === 'agent' ? callerAgentName : undefined,
             prompt,
           }),
         });
@@ -174,13 +195,20 @@ export function AgentRequestComposer({
         </div>
 
         <p className="mt-3 text-sm leading-6 text-slate-600">
-          This request will trigger an x402 payment on Base Sepolia before the
-          agent response is returned.
+          {mode === 'agent'
+            ? 'Your selected agent will resolve the target over ENS, validate its credential metadata, and trigger the same x402 payment rail before the response is returned.'
+            : 'This request will trigger an x402 payment on Base Sepolia before the agent response is returned.'}
         </p>
 
         <p className="mt-3 text-sm text-slate-600">
           Capabilities: {capabilities.join(', ') || 'general analysis'}
         </p>
+        {targetVerification ? (
+          <p className="mt-2 text-sm text-slate-600">
+            ENS verification: {targetVerification.verificationLevel ?? 'missing'} •
+            credential {targetVerification.credentialHash ? 'present' : 'missing'}
+          </p>
+        ) : null}
       </section>
 
       <form
@@ -197,12 +225,36 @@ export function AgentRequestComposer({
           />
         </label>
 
+        {mode === 'agent' ? (
+          <label className="grid gap-2">
+            <span className="text-sm font-medium text-slate-800">
+              Calling agent
+            </span>
+            <select
+              className="rounded-[22px] border border-slate-200 bg-white/80 px-4 py-3 outline-none transition focus:border-slate-950"
+              onChange={(event) => setCallerAgentName(event.target.value)}
+              required
+              value={callerAgentName}
+            >
+              {callerAgents.map((agent) => (
+                <option key={agent.ensName} value={agent.ensName}>
+                  {agent.ensName} · {agent.category}
+                </option>
+              ))}
+            </select>
+          </label>
+        ) : null}
+
         <button
           className="rounded-[22px] bg-slate-950 px-5 py-3 text-sm font-medium text-white transition disabled:cursor-not-allowed disabled:bg-slate-400"
-          disabled={isPending}
+          disabled={isPending || (mode === 'agent' && !callerAgentName)}
           type="submit"
         >
-          {isPending ? 'Processing payment...' : 'Pay and run agent'}
+          {isPending
+            ? 'Processing payment...'
+            : mode === 'agent'
+              ? 'Pay and compose agents'
+              : 'Pay and run agent'}
         </button>
       </form>
 
@@ -221,6 +273,11 @@ export function AgentRequestComposer({
             <h2 className="mt-2 font-[family:var(--font-space-grotesk)] text-2xl font-semibold tracking-tight text-slate-950">
               {result.result.summary}
             </h2>
+            {result.callerAgent ? (
+              <p className="mt-2 text-sm text-slate-600">
+                Composed via {result.callerAgent}
+              </p>
+            ) : null}
           </div>
 
           <p className="text-sm leading-6 text-slate-700">{result.result.verdict}</p>

@@ -11,6 +11,7 @@ export type HederaMode = 'live' | 'stub' | 'error';
 export interface ServiceCompletionLogInput {
   type?: string;
   agent?: string;
+  callerAgent?: string | null;
   requester?: string | null;
   priceUsdc?: string;
   paymentNetwork?: string;
@@ -32,6 +33,7 @@ type HederaCompletionEvent = {
   version: 1;
   type: string;
   agent: string;
+  callerAgent: string | null;
   requester: string | null;
   priceUsdc: string;
   paymentNetwork: string | null;
@@ -125,6 +127,7 @@ function buildCompletionEvent(
     version: 1,
     type: input.type ?? 'service_completed',
     agent: input.agent,
+    callerAgent: input.callerAgent ?? null,
     requester: input.requester ?? null,
     priceUsdc: input.priceUsdc ?? '0',
     paymentNetwork: input.paymentNetwork ?? null,

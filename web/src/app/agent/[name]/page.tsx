@@ -2,6 +2,7 @@ import { ReputationBadge } from '@/components/ReputationBadge';
 import { resolveAgentProfile } from '@/lib/ens';
 import { getAgentReputation } from '@/lib/hedera';
 import { getAgentListingByEnsName } from '@/lib/marketplace';
+import Link from 'next/link';
 import { notFound } from 'next/navigation';
 
 export const dynamic = 'force-dynamic';
@@ -78,6 +79,21 @@ export default async function AgentDetailPage({
       />
 
       <p className="text-sm leading-6 text-slate-600">{description}</p>
+
+      <div className="flex gap-3">
+        <Link
+          className="inline-flex rounded-[20px] border border-slate-200 bg-white/75 px-4 py-3 text-sm font-medium text-slate-900 transition hover:border-slate-950"
+          href={`/use/${encodeURIComponent(decodedName)}`}
+        >
+          Use this agent
+        </Link>
+        <Link
+          className="inline-flex rounded-[20px] bg-slate-950 px-4 py-3 text-sm font-medium text-white transition hover:bg-slate-800"
+          href={`/compose/${encodeURIComponent(decodedName)}`}
+        >
+          Compose as agent
+        </Link>
+      </div>
 
       <section className="grid gap-4 rounded-[30px] border border-[var(--line)] bg-[var(--surface)] p-6 shadow-[0_18px_40px_rgba(19,34,28,0.06)] backdrop-blur-xl">
         <div className="grid gap-1">

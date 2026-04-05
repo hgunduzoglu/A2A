@@ -1,3 +1,4 @@
+import { resolveAgentProfile } from '@/lib/ens';
 import { logServiceCompletion } from '@/lib/hedera';
 import { getAgentListingByEnsName, type AgentListing } from '@/lib/marketplace';
 import { HTTPFacilitatorClient, x402HTTPResourceServer } from '@x402/core/http';
@@ -8,6 +9,7 @@ import { NextResponse } from 'next/server';
 type RequestServicePayload = {
   agentName?: string;
   prompt?: string;
+  callerAgentName?: string;
 };
 
 type RequestAdapter = {
@@ -31,6 +33,12 @@ type PreparedPaymentContext =
       payload: {
         agentName: string;
         prompt: string;
+        callerAgentName?: string;
+      };
+      callerAgent: AgentListing | null;
+      targetVerification: {
+        verificationLevel: string | null;
+        credentialHash: string | null;
       };
       requestContext: {
         adapter: RequestAdapter;
@@ -214,6 +222,20 @@ function buildMockAgentResult(listing: AgentListing, prompt: string) {
   };
 }
 
+function getEnsRecords(profile: Awaited<ReturnType<typeof resolveAgentProfile>>) {
+  if (
+    typeof profile === 'object' &&
+    profile !== null &&
+    'records' in profile &&
+    profile.records &&
+    typeof profile.records === 'object'
+  ) {
+    return profile.records as Record<string, string>;
+  }
+
+  return {};
+}
+
 function toHighlightList(input: unknown) {
   if (!Array.isArray(input)) {
     return [];
@@ -312,6 +334,7 @@ async function invokeAgentEndpoint(
   listing: AgentListing,
   prompt: string,
   requester: string | null,
+  callerAgent: AgentListing | null,
 ) {
   const response = await fetch(listing.endpoint, {
     method: 'POST',
@@ -328,6 +351,14 @@ async function invokeAgentEndpoint(
         capabilities: listing.capabilities,
         priceUsdc: listing.priceUsdc,
       },
+      callerAgent: callerAgent
+        ? {
+            ensName: callerAgent.ensName,
+            category: callerAgent.category,
+            capabilities: callerAgent.capabilities,
+            credentialHash: callerAgent.credentialHash,
+          }
+        : undefined,
       requester: requester ?? undefined,
       source: 'a2a-mini-app',
     }),
@@ -364,6 +395,8 @@ export async function prepareNanopayment(
 ): Promise<PreparedPaymentContext> {
   const agentName = typeof input.agentName === 'string' ? input.agentName : '';
   const prompt = typeof input.prompt === 'string' ? input.prompt : '';
+  const callerAgentName =
+    typeof input.callerAgentName === 'string' ? input.callerAgentName : '';
 
   if (!agentName || !prompt.trim()) {
     return {
@@ -379,6 +412,9 @@ export async function prepareNanopayment(
   }
 
   const listing = await getAgentListingByEnsName(agentName);
+  const callerAgent = callerAgentName
+    ? await getAgentListingByEnsName(callerAgentName)
+    : null;
 
   if (!listing) {
     return {
@@ -400,6 +436,68 @@ export async function prepareNanopayment(
         {
           ok: false,
           message: 'This agent does not have a payment address configured.',
+        },
+        { status: 409 },
+      ),
+    };
+  }
+
+  if (callerAgentName) {
+    if (!callerAgent) {
+      return {
+        type: 'response',
+        response: NextResponse.json(
+          {
+            ok: false,
+            message: 'Calling agent was not found.',
+          },
+          { status: 404 },
+        ),
+      };
+    }
+
+    if (callerAgent.ensName === listing.ensName) {
+      return {
+        type: 'response',
+        response: NextResponse.json(
+          {
+            ok: false,
+            message: 'An agent cannot compose with itself.',
+          },
+          { status: 409 },
+        ),
+      };
+    }
+
+    if (!callerAgent.credentialHash) {
+      return {
+        type: 'response',
+        response: NextResponse.json(
+          {
+            ok: false,
+            message: 'The calling agent is missing its human-backed credential.',
+          },
+          { status: 409 },
+        ),
+      };
+    }
+  }
+
+  const targetProfile = await resolveAgentProfile(listing.ensName);
+  const targetRecords = getEnsRecords(targetProfile);
+  const targetVerificationLevel =
+    targetRecords['world-verification'] ?? listing.verificationLevel ?? null;
+  const targetCredentialHash =
+    targetRecords['agent-credential'] ?? listing.credentialHash ?? null;
+
+  if (!targetVerificationLevel || !targetCredentialHash) {
+    return {
+      type: 'response',
+      response: NextResponse.json(
+        {
+          ok: false,
+          message:
+            'The target agent is missing required ENS verification or credential metadata.',
         },
         { status: 409 },
       ),
@@ -445,6 +543,12 @@ export async function prepareNanopayment(
     payload: {
       agentName,
       prompt: prompt.trim(),
+      callerAgentName: callerAgentName || undefined,
+    },
+    callerAgent,
+    targetVerification: {
+      verificationLevel: targetVerificationLevel,
+      credentialHash: targetCredentialHash,
     },
     requestContext,
     paymentPayload: result.paymentPayload,
@@ -464,6 +568,7 @@ export async function settleNanopayment(
       context.listing,
       context.payload.prompt,
       null,
+      context.callerAgent,
     );
   } catch (error) {
     return {
@@ -485,8 +590,10 @@ export async function settleNanopayment(
     ok: true,
     mode: 'x402',
     agent: context.listing.ensName,
+    callerAgent: context.callerAgent?.ensName ?? null,
     priceUsdc: context.listing.priceUsdc,
     network: getX402Config().network,
+    targetVerification: context.targetVerification,
     result,
   };
   const settlement = await httpServer.processSettlement(
@@ -509,6 +616,7 @@ export async function settleNanopayment(
   const completionLog = await logServiceCompletion({
     type: 'service_completed',
     agent: context.listing.ensName,
+    callerAgent: context.callerAgent?.ensName ?? null,
     requester: settlement.payer ?? null,
     priceUsdc: context.listing.priceUsdc,
     paymentNetwork: settlement.network,
@@ -518,6 +626,21 @@ export async function settleNanopayment(
     mode: 'error',
     message: error instanceof Error ? error.message : 'Unknown Hedera error.',
   }));
+  const compositionLog = context.callerAgent
+    ? await logServiceCompletion({
+        type: 'service_composed',
+        agent: context.callerAgent.ensName,
+        callerAgent: context.callerAgent.ensName,
+        requester: settlement.payer ?? null,
+        priceUsdc: context.listing.priceUsdc,
+        paymentNetwork: settlement.network,
+        paymentTransaction: settlement.transaction,
+      }).catch((error) => ({
+        provider: 'hedera',
+        mode: 'error',
+        message: error instanceof Error ? error.message : 'Unknown Hedera error.',
+      }))
+    : null;
 
   return {
     type: 'settled' as const,
@@ -529,6 +652,7 @@ export async function settleNanopayment(
         transaction: settlement.transaction,
       },
       completionLog,
+      compositionLog,
     },
     headers: settlement.headers,
   };

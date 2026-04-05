@@ -24,7 +24,7 @@ const navItems: NavItem[] = [
   {
     href: '/explore',
     label: 'Explore',
-    matchers: ['/explore', '/agent', '/use'],
+    matchers: ['/explore', '/agent', '/use', '/compose'],
     icon: AreaSearch,
   },
   {
@@ -60,6 +60,10 @@ function getScreenTitle(pathname: string) {
 
   if (pathname.startsWith('/use/')) {
     return 'Use Agent';
+  }
+
+  if (pathname.startsWith('/compose/')) {
+    return 'Compose Agents';
   }
 
   if (pathname.startsWith('/dashboard')) {
