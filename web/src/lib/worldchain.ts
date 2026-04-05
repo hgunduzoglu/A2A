@@ -18,6 +18,7 @@ const AGENT_REGISTRY_ABI = parseAbi([
   'function registerAgent(string ensName, bytes32 nullifierHash, bytes32 agentKitCredential, string[] capabilities, uint256 pricePerRequest)',
   'function getAgent(string ensName) view returns ((string ensName, bytes32 nullifierHash, bytes32 agentKitCredential, string[] capabilities, uint256 pricePerRequest, bool active))',
   'function getAllAgents() view returns ((string ensName, bytes32 nullifierHash, bytes32 agentKitCredential, string[] capabilities, uint256 pricePerRequest, bool active)[])',
+  'function getAgentCount(bytes32 nullifierHash) view returns (uint256)',
   'function isVerifiedAgent(string ensName) view returns (bool)',
 ]);
 
@@ -49,7 +50,7 @@ function getWorldChainConfig() {
   };
 }
 
-function normalizeBytes32(value: string | null | undefined) {
+export function normalizeBytes32(value: string | null | undefined) {
   if (!value) {
     return zeroHash;
   }
@@ -195,6 +196,23 @@ export async function getRegisteredAgentFromWorldChain(ensName: string) {
   }
 
   return mapAgentRecord(record);
+}
+
+export async function getAgentCountFromWorldChain(nullifierHash: string) {
+  const client = getWorldChainReadClient();
+
+  if (!client) {
+    return 0;
+  }
+
+  const count = (await client.publicClient.readContract({
+    address: client.registryAddress,
+    abi: AGENT_REGISTRY_ABI,
+    functionName: 'getAgentCount',
+    args: [normalizeBytes32(nullifierHash)],
+  })) as bigint;
+
+  return Number(count);
 }
 
 export async function listRegisteredAgentsFromWorldChain() {

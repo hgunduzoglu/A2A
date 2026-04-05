@@ -35,12 +35,7 @@ type RegisterAgentResponse = {
     contractAddress?: string;
     txHash?: string;
   };
-  marketplace?: {
-    id: number;
-    status: string;
-    indexedAt: string;
-    agentCountForHuman: number;
-  };
+  agentCountForHuman?: number;
   credential?: {
     mode?: string;
     credentialHash?: string;
@@ -352,10 +347,9 @@ export function AgentCreateForm({ nullifier }: AgentCreateFormProps) {
             Payment address: {result.agent.paymentAddress ?? 'Not set'}
           </p>
           <p>Capabilities: {result.agent.capabilities.join(', ')}</p>
-          {result.marketplace ? (
+          {result.agentCountForHuman ? (
             <p>
-              Marketplace index: {result.marketplace.status} • agent #
-              {result.marketplace.id}
+              Agent count for this human: {result.agentCountForHuman} / 5
             </p>
           ) : null}
           {result.ensRecord?.createHash ? (

@@ -86,7 +86,17 @@ contract AgentRegistry {
     return agents[ensName];
   }
 
+  address private owner;
+
+  constructor() {
+    owner = msg.sender;
+  }
+
   function deactivateAgent(string calldata ensName) external {
+    require(
+      msg.sender == owner,
+      "AgentRegistry: only owner can deactivate"
+    );
     require(
       agents[ensName].nullifierHash != bytes32(0),
       "AgentRegistry: unknown agent"

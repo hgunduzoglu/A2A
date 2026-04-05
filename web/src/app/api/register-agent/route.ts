@@ -1,11 +1,10 @@
 import { createAgentCredential } from '@/lib/agentkit';
-import { toAgentEnsName } from '@/lib/agents';
-import { registerAgentSubname } from '@/lib/ens';
 import {
-  getAgentCountForHuman,
+  toAgentEnsName,
   getAgentListingByEnsName,
-  saveAgentListing,
-} from '@/lib/marketplace';
+  getAgentCountForHuman,
+} from '@/lib/agents';
+import { registerAgentSubname } from '@/lib/ens';
 import { registerAgentOnWorldChain } from '@/lib/worldchain';
 import {
   WORLD_ID_SESSION_COOKIE,
@@ -47,7 +46,7 @@ export async function POST(request: Request) {
     return NextResponse.json(
       {
         ok: false,
-        message: 'This ENS agent name is already listed in the marketplace.',
+        message: 'This ENS agent name is already registered on the World Chain registry.',
       },
       { status: 409 },
     );
@@ -111,124 +110,16 @@ export async function POST(request: Request) {
       : [],
     priceUsdc: typeof payload.price === 'string' ? payload.price : '0',
   });
-  const listing = await saveAgentListing({
-    ensName,
-    agentName,
-    category:
-      typeof payload.category === 'string' && payload.category.trim().length > 0
-        ? payload.category
-        : 'Analysis',
-    description:
-      typeof payload.description === 'string' ? payload.description : '',
-    endpoint: typeof payload.endpoint === 'string' ? payload.endpoint : '',
-    priceUsdc: typeof payload.price === 'string' ? payload.price : '0',
-    capabilities: Array.isArray(payload.capabilities)
-      ? payload.capabilities.map((value: unknown) => String(value))
-      : [],
-    worldNullifierHash: session.nullifier,
-    verificationLevel: 'orb',
-    credentialHash:
-      typeof credential.credentialHash === 'string'
-        ? credential.credentialHash
-        : null,
-    ensNode:
-      typeof ensRecord === 'object' &&
-      ensRecord !== null &&
-      'node' in ensRecord &&
-      typeof ensRecord.node === 'string'
-        ? ensRecord.node
-        : null,
-    ensResolver:
-      typeof ensRecord === 'object' &&
-      ensRecord !== null &&
-      'resolver' in ensRecord &&
-      typeof ensRecord.resolver === 'string'
-        ? ensRecord.resolver
-        : null,
-    ensCreateTxHash:
-      typeof ensRecord === 'object' &&
-      ensRecord !== null &&
-      'createHash' in ensRecord &&
-      typeof ensRecord.createHash === 'string'
-        ? ensRecord.createHash
-        : null,
-    ensTextRecordTxHashes:
-      typeof ensRecord === 'object' &&
-      ensRecord !== null &&
-      'textRecordTransactionHashes' in ensRecord &&
-      Array.isArray(ensRecord.textRecordTransactionHashes)
-        ? ensRecord.textRecordTransactionHashes.map((value) => String(value))
-        : [],
-    paymentAddress:
-      paymentAddress ??
-      (typeof ensRecord === 'object' &&
-      ensRecord !== null &&
-      'textRecords' in ensRecord &&
-      Array.isArray(ensRecord.textRecords)
-        ? (ensRecord.textRecords.find(
-            (entry: unknown) =>
-              Array.isArray(entry) &&
-              entry[0] === 'payment-address' &&
-              typeof entry[1] === 'string',
-          )?.[1] ?? null)
-        : null),
-    registryContractAddress:
-      typeof registryRecord === 'object' &&
-      registryRecord !== null &&
-      'contractAddress' in registryRecord &&
-      typeof registryRecord.contractAddress === 'string'
-        ? registryRecord.contractAddress
-        : null,
-    registryTxHash:
-      typeof registryRecord === 'object' &&
-      registryRecord !== null &&
-      'txHash' in registryRecord &&
-      typeof registryRecord.txHash === 'string'
-        ? registryRecord.txHash
-        : null,
-    agentkitMode:
-      typeof credential === 'object' &&
-      credential !== null &&
-      'mode' in credential &&
-      typeof credential.mode === 'string'
-        ? credential.mode
-        : 'stub',
-    agentkitHumanId:
-      typeof credential === 'object' &&
-      credential !== null &&
-      'humanId' in credential &&
-      typeof credential.humanId === 'string'
-        ? credential.humanId
-        : null,
-    agentkitVerifiedAt:
-      typeof credential === 'object' &&
-      credential !== null &&
-      'verifiedAt' in credential &&
-      typeof credential.verifiedAt === 'string'
-        ? credential.verifiedAt
-        : null,
-    registrationMode:
-      typeof registryRecord === 'object' &&
-      registryRecord !== null &&
-      'mode' in registryRecord &&
-      typeof registryRecord.mode === 'string'
-        ? registryRecord.mode
-        : typeof ensRecord === 'object' &&
-            ensRecord !== null &&
-            'mode' in ensRecord &&
-            typeof ensRecord.mode === 'string'
-          ? ensRecord.mode
-        : 'stub',
-  });
 
   return NextResponse.json({
     ok: true,
     message:
       registryRecord.mode === 'live'
-        ? 'Agent registered with AgentKit, ENS, World Chain, and the marketplace index.'
-        : 'Agent registered with AgentKit and ENS, then indexed for marketplace discovery. World Chain deploy address is still missing.',
+        ? 'Agent registered with AgentKit, ENS, and World Chain. Fully on-chain.'
+        : 'Agent registered with AgentKit and ENS. World Chain deploy address is still missing.',
     agent: {
       ensName,
+      agentName,
       category: payload.category,
       endpoint: payload.endpoint,
       price: payload.price,
@@ -251,11 +142,6 @@ export async function POST(request: Request) {
     credential,
     ensRecord,
     registryRecord,
-    marketplace: {
-      id: listing.id,
-      status: listing.status,
-      indexedAt: listing.updatedAt,
-      agentCountForHuman: agentCountForHuman + 1,
-    },
+    agentCountForHuman: agentCountForHuman + 1,
   });
 }

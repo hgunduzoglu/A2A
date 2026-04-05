@@ -1,25 +1,12 @@
 import { ReputationBadge } from '@/components/ReputationBadge';
+import { getAgentListingByEnsName } from '@/lib/agents';
 import { resolveAgentProfile } from '@/lib/ens';
 import { getAgentReputation } from '@/lib/hedera';
-import { getAgentListingByEnsName } from '@/lib/marketplace';
 import { getRegisteredAgentFromWorldChain } from '@/lib/worldchain';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 
 export const dynamic = 'force-dynamic';
-
-function parseCapabilities(value: string | undefined, fallback: string[]) {
-  if (!value) {
-    return fallback;
-  }
-
-  try {
-    const parsed = JSON.parse(value);
-    return Array.isArray(parsed) ? parsed.map(String) : fallback;
-  } catch {
-    return fallback;
-  }
-}
 
 export default async function AgentDetailPage({
   params,
@@ -37,7 +24,6 @@ export default async function AgentDetailPage({
 
   const ensProfile = await resolveAgentProfile(decodedName);
   const reputation = await getAgentReputation(decodedName);
-  const isLiveReputation = reputation.mode === 'live';
   const records =
     typeof ensProfile === 'object' &&
     ensProfile !== null &&
@@ -46,37 +32,24 @@ export default async function AgentDetailPage({
     typeof ensProfile.records === 'object'
       ? (ensProfile.records as Record<string, string>)
       : {};
-  const capabilities = parseCapabilities(
-    records['agent-capabilities'],
-    agent?.capabilities ?? registryAgent?.capabilities ?? [],
-  );
-  const description = records['agent-description'] ?? agent?.description ?? '';
-  const endpoint = records['agent-endpoint'] ?? agent?.endpoint ?? 'Not set';
-  const price =
-    records['agent-price'] ?? agent?.priceUsdc ?? registryAgent?.priceUsdc ?? '0';
-  const paymentAddress = records['payment-address'] ?? agent?.paymentAddress ?? null;
+  const capabilities = agent?.capabilities ?? registryAgent?.capabilities ?? [];
+  const description = agent?.description ?? '';
+  const endpoint = agent?.endpoint ?? 'Not set';
+  const price = agent?.priceUsdc ?? registryAgent?.priceUsdc ?? '0';
+  const paymentAddress = agent?.paymentAddress ?? null;
   const worldNullifier =
     records['world-nullifier'] ??
     agent?.worldNullifierHash ??
     registryAgent?.nullifierHash;
-  const verification =
-    records['world-verification'] ?? agent?.verificationLevel ?? 'unknown';
+  const verification = agent?.verificationLevel ?? 'unknown';
   const ensResolver =
-    agent?.ensResolver ??
-    (typeof ensProfile === 'object' &&
+    typeof ensProfile === 'object' &&
     ensProfile !== null &&
     'resolver' in ensProfile &&
     typeof ensProfile.resolver === 'string'
       ? ensProfile.resolver
-      : null);
-  const credentialHash =
-    records['agent-credential'] ??
-    agent?.credentialHash ??
-    registryAgent?.credentialHash ??
-    null;
-  const agentkitMode = agent?.agentkitMode ?? 'stub';
-  const agentkitVerifiedAt = agent?.agentkitVerifiedAt ?? null;
-  const agentkitHumanLookup = agent?.agentkitHumanId ? 'found' : 'not_found';
+      : null;
+  const credentialHash = agent?.credentialHash ?? registryAgent?.credentialHash ?? null;
   const nullifierMatchesRegistry = Boolean(
     registryAgent && worldNullifier && registryAgent.nullifierHash === worldNullifier,
   );
@@ -117,12 +90,8 @@ export default async function AgentDetailPage({
       </div>
 
       <ReputationBadge
-        completions={
-          isLiveReputation
-            ? reputation.completions
-            : (agent?.completionCount ?? 0)
-        }
-        rating={isLiveReputation ? reputation.rating : (agent?.reputationScore ?? '4.50')}
+        completions={reputation.completions}
+        rating={reputation.rating}
       />
 
       <p className="text-sm leading-6 text-slate-600">{description}</p>
@@ -212,9 +181,9 @@ export default async function AgentDetailPage({
             Hedera reputation
           </span>
           <span className="text-slate-900">
-            {isLiveReputation ? reputation.rating : (agent?.reputationScore ?? '4.50')} rating
+            {reputation.rating} rating
             {' • '}
-            {isLiveReputation ? reputation.completions : (agent?.completionCount ?? 0)} completions
+            {reputation.completions} completions
           </span>
         </div>
         <div className="grid gap-1">
@@ -222,29 +191,9 @@ export default async function AgentDetailPage({
             AgentKit credential
           </span>
           <span className="text-slate-900">
-            {agentkitMode === 'live'
-              ? 'World wallet signature verified'
-              : 'Credential metadata unavailable'}
-          </span>
-        </div>
-        <div className="grid gap-1">
-          <span className="text-sm uppercase tracking-[0.2em] text-slate-500">
-            AgentBook lookup
-          </span>
-          <span className="text-slate-900">
-            {agentkitHumanLookup === 'found'
-              ? 'World AgentBook human link found'
-              : 'World ID-linked credential only'}
-          </span>
-        </div>
-        <div className="grid gap-1">
-          <span className="text-sm uppercase tracking-[0.2em] text-slate-500">
-            AgentKit verified at
-          </span>
-          <span className="text-slate-900">
-            {agentkitVerifiedAt
-              ? new Date(agentkitVerifiedAt).toLocaleString('en-US')
-              : 'Not available'}
+            {credentialHash
+              ? 'Human-backed credential present'
+              : 'Credential not found'}
           </span>
         </div>
       </section>

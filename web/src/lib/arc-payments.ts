@@ -1,6 +1,6 @@
 import { resolveAgentProfile } from '@/lib/ens';
 import { logServiceCompletion } from '@/lib/hedera';
-import { getAgentListingByEnsName, type AgentListing } from '@/lib/marketplace';
+import { getAgentListingByEnsName, type AgentListing } from '@/lib/agents';
 import { HTTPFacilitatorClient, x402HTTPResourceServer } from '@x402/core/http';
 import { x402ResourceServer } from '@x402/core/server';
 import { ExactEvmScheme } from '@x402/evm/exact/server';

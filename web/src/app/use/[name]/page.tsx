@@ -1,6 +1,6 @@
 import { AgentRequestComposer } from '@/components/AgentRequestComposer';
 import { getX402ClientConfig } from '@/lib/arc-payments';
-import { getAgentListingByEnsName } from '@/lib/marketplace';
+import { getAgentListingByEnsName } from '@/lib/agents';
 import { notFound } from 'next/navigation';
 
 export default async function UseAgentPage({

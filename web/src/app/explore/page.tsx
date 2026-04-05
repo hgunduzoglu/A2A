@@ -1,7 +1,6 @@
 import { AgentCard } from '@/components/AgentCard';
+import { listAgentListings } from '@/lib/agents';
 import { getAgentReputationMap } from '@/lib/hedera';
-import { listAgentListings } from '@/lib/marketplace';
-import { listRegisteredAgentsFromWorldChain } from '@/lib/worldchain';
 import Link from 'next/link';
 
 export const dynamic = 'force-dynamic';
@@ -18,14 +17,9 @@ export default async function ExplorePage({
     params?.category && categories.includes(params.category)
       ? params.category
       : 'All';
-  const indexedAgents = await listAgentListings(
+  const agents = await listAgentListings(
     activeCategory === 'All' ? null : activeCategory,
   );
-  const registryAgents = await listRegisteredAgentsFromWorldChain();
-  const activeRegistryNames = new Set(
-    registryAgents.filter((agent) => agent.active).map((agent) => agent.ensName),
-  );
-  const agents = indexedAgents.filter((agent) => activeRegistryNames.has(agent.ensName));
   const reputationMap = await getAgentReputationMap(
     agents.map((agent) => agent.ensName),
   );
@@ -74,19 +68,16 @@ export default async function ExplorePage({
         <div className="grid gap-4 md:grid-cols-2">
           {agents.map((agent) => {
             const metrics = reputationMap.get(agent.ensName);
-            const isLive = metrics?.mode === 'live';
 
             return (
             <AgentCard
               key={agent.ensName}
               category={agent.category}
-              completions={
-                isLive ? (metrics?.completions ?? agent.completionCount) : agent.completionCount
-              }
+              completions={metrics?.completions ?? 0}
               description={agent.description}
               name={agent.ensName}
               price={`$${agent.priceUsdc} / request`}
-              reputation={isLive ? (metrics?.rating ?? agent.reputationScore) : agent.reputationScore}
+              reputation={metrics?.rating ?? '4.50'}
             />
             );
           })}

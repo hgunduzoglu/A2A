@@ -1,7 +1,7 @@
 import { AgentRequestComposer } from '@/components/AgentRequestComposer';
 import { getX402ClientConfig } from '@/lib/arc-payments';
 import { resolveAgentProfile } from '@/lib/ens';
-import { listAgentListingsForHuman, getAgentListingByEnsName } from '@/lib/marketplace';
+import { listAgentListingsForHuman, getAgentListingByEnsName } from '@/lib/agents';
 import { WORLD_ID_SESSION_COOKIE, decodeWorldIdSession } from '@/lib/worldid';
 import { cookies } from 'next/headers';
 import Link from 'next/link';
