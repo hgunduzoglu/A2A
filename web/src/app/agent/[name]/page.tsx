@@ -2,6 +2,7 @@ import { ReputationBadge } from '@/components/ReputationBadge';
 import { resolveAgentProfile } from '@/lib/ens';
 import { getAgentReputation } from '@/lib/hedera';
 import { getAgentListingByEnsName } from '@/lib/marketplace';
+import { getRegisteredAgentFromWorldChain } from '@/lib/worldchain';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 
@@ -28,8 +29,9 @@ export default async function AgentDetailPage({
   const { name } = await params;
   const decodedName = decodeURIComponent(name);
   const agent = await getAgentListingByEnsName(decodedName);
+  const registryAgent = await getRegisteredAgentFromWorldChain(decodedName);
 
-  if (!agent) {
+  if (!agent && !registryAgent) {
     notFound();
   }
 
@@ -46,15 +48,53 @@ export default async function AgentDetailPage({
       : {};
   const capabilities = parseCapabilities(
     records['agent-capabilities'],
-    agent.capabilities,
+    agent?.capabilities ?? registryAgent?.capabilities ?? [],
   );
-  const description = records['agent-description'] ?? agent.description;
-  const endpoint = records['agent-endpoint'] ?? agent.endpoint;
-  const price = records['agent-price'] ?? agent.priceUsdc;
-  const paymentAddress = records['payment-address'] ?? agent.paymentAddress;
+  const description = records['agent-description'] ?? agent?.description ?? '';
+  const endpoint = records['agent-endpoint'] ?? agent?.endpoint ?? 'Not set';
+  const price =
+    records['agent-price'] ?? agent?.priceUsdc ?? registryAgent?.priceUsdc ?? '0';
+  const paymentAddress = records['payment-address'] ?? agent?.paymentAddress ?? null;
   const worldNullifier =
-    records['world-nullifier'] ?? agent.worldNullifierHash;
-  const verification = records['world-verification'] ?? agent.verificationLevel;
+    records['world-nullifier'] ??
+    agent?.worldNullifierHash ??
+    registryAgent?.nullifierHash;
+  const verification =
+    records['world-verification'] ?? agent?.verificationLevel ?? 'unknown';
+  const ensResolver =
+    agent?.ensResolver ??
+    (typeof ensProfile === 'object' &&
+    ensProfile !== null &&
+    'resolver' in ensProfile &&
+    typeof ensProfile.resolver === 'string'
+      ? ensProfile.resolver
+      : null);
+  const credentialHash =
+    records['agent-credential'] ??
+    agent?.credentialHash ??
+    registryAgent?.credentialHash ??
+    null;
+  const nullifierMatchesRegistry = Boolean(
+    registryAgent && worldNullifier && registryAgent.nullifierHash === worldNullifier,
+  );
+  const credentialMatchesRegistry = Boolean(
+    registryAgent &&
+      credentialHash &&
+      registryAgent.credentialHash === credentialHash,
+  );
+  const capabilitiesMatchRegistry = Boolean(
+    registryAgent &&
+      JSON.stringify([...registryAgent.capabilities].sort()) ===
+        JSON.stringify([...capabilities].sort()),
+  );
+  const priceMatchesRegistry = Boolean(
+    registryAgent && registryAgent.priceUsdc === price,
+  );
+  const registryVerified = Boolean(
+    registryAgent?.active &&
+      nullifierMatchesRegistry &&
+      credentialMatchesRegistry,
+  );
 
   return (
     <main className="mx-auto flex w-full max-w-[860px] flex-col gap-4">
@@ -68,14 +108,18 @@ export default async function AgentDetailPage({
       </section>
 
       <div className="inline-flex w-fit rounded-full bg-emerald-50 px-4 py-2 text-sm font-medium text-emerald-800">
-        Verified human-backed agent
+        {registryVerified
+          ? 'Verified human-backed agent'
+          : 'Agent metadata needs verification review'}
       </div>
 
       <ReputationBadge
         completions={
-          isLiveReputation ? reputation.completions : agent.completionCount
+          isLiveReputation
+            ? reputation.completions
+            : (agent?.completionCount ?? 0)
         }
-        rating={isLiveReputation ? reputation.rating : agent.reputationScore}
+        rating={isLiveReputation ? reputation.rating : (agent?.reputationScore ?? '4.50')}
       />
 
       <p className="text-sm leading-6 text-slate-600">{description}</p>
@@ -100,7 +144,9 @@ export default async function AgentDetailPage({
           <span className="text-sm uppercase tracking-[0.2em] text-slate-500">
             Category
           </span>
-          <span className="text-slate-900">{agent.category}</span>
+          <span className="text-slate-900">
+            {agent?.category ?? 'Uncategorized'}
+          </span>
         </div>
         <div className="grid gap-1">
           <span className="text-sm uppercase tracking-[0.2em] text-slate-500">
@@ -147,7 +193,7 @@ export default async function AgentDetailPage({
             ENS resolver
           </span>
           <span className="break-all font-mono text-sm text-slate-900">
-            {agent.ensResolver ?? 'Resolver not found'}
+            {ensResolver ?? 'Resolver not found'}
           </span>
         </div>
         <div className="grid gap-1">
@@ -163,9 +209,71 @@ export default async function AgentDetailPage({
             Hedera reputation
           </span>
           <span className="text-slate-900">
-            {isLiveReputation ? reputation.rating : agent.reputationScore} rating
+            {isLiveReputation ? reputation.rating : (agent?.reputationScore ?? '4.50')} rating
             {' • '}
-            {isLiveReputation ? reputation.completions : agent.completionCount} completions
+            {isLiveReputation ? reputation.completions : (agent?.completionCount ?? 0)} completions
+          </span>
+        </div>
+      </section>
+
+      <section className="grid gap-4 rounded-[30px] border border-[var(--line)] bg-[var(--surface)] p-6 shadow-[0_18px_40px_rgba(19,34,28,0.06)] backdrop-blur-xl">
+        <h2 className="text-lg font-semibold text-slate-950">
+          World Chain Registry Check
+        </h2>
+        <div className="grid gap-1">
+          <span className="text-sm uppercase tracking-[0.2em] text-slate-500">
+            Registry status
+          </span>
+          <span className="text-slate-900">
+            {registryAgent?.active ? 'Active on World Chain' : 'Not found on registry'}
+          </span>
+        </div>
+        <div className="grid gap-1">
+          <span className="text-sm uppercase tracking-[0.2em] text-slate-500">
+            Nullifier consistency
+          </span>
+          <span className="text-slate-900">
+            {registryAgent
+              ? nullifierMatchesRegistry
+                ? 'ENS and registry match'
+                : 'Mismatch detected'
+              : 'Registry unavailable'}
+          </span>
+        </div>
+        <div className="grid gap-1">
+          <span className="text-sm uppercase tracking-[0.2em] text-slate-500">
+            Credential consistency
+          </span>
+          <span className="text-slate-900">
+            {registryAgent
+              ? credentialMatchesRegistry
+                ? 'ENS and registry match'
+                : 'Mismatch detected'
+              : 'Registry unavailable'}
+          </span>
+        </div>
+        <div className="grid gap-1">
+          <span className="text-sm uppercase tracking-[0.2em] text-slate-500">
+            Capability consistency
+          </span>
+          <span className="text-slate-900">
+            {registryAgent
+              ? capabilitiesMatchRegistry
+                ? 'ENS and registry match'
+                : 'Mismatch detected'
+              : 'Registry unavailable'}
+          </span>
+        </div>
+        <div className="grid gap-1">
+          <span className="text-sm uppercase tracking-[0.2em] text-slate-500">
+            Price consistency
+          </span>
+          <span className="text-slate-900">
+            {registryAgent
+              ? priceMatchesRegistry
+                ? 'ENS and registry match'
+                : 'Mismatch detected'
+              : 'Registry unavailable'}
           </span>
         </div>
       </section>

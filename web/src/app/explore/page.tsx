@@ -1,6 +1,7 @@
 import { AgentCard } from '@/components/AgentCard';
 import { getAgentReputationMap } from '@/lib/hedera';
 import { listAgentListings } from '@/lib/marketplace';
+import { listRegisteredAgentsFromWorldChain } from '@/lib/worldchain';
 import Link from 'next/link';
 
 export const dynamic = 'force-dynamic';
@@ -17,9 +18,14 @@ export default async function ExplorePage({
     params?.category && categories.includes(params.category)
       ? params.category
       : 'All';
-  const agents = await listAgentListings(
+  const indexedAgents = await listAgentListings(
     activeCategory === 'All' ? null : activeCategory,
   );
+  const registryAgents = await listRegisteredAgentsFromWorldChain();
+  const activeRegistryNames = new Set(
+    registryAgents.filter((agent) => agent.active).map((agent) => agent.ensName),
+  );
+  const agents = indexedAgents.filter((agent) => activeRegistryNames.has(agent.ensName));
   const reputationMap = await getAgentReputationMap(
     agents.map((agent) => agent.ensName),
   );
@@ -34,7 +40,8 @@ export default async function ExplorePage({
           Explore Agents
         </h2>
         <p className="mt-2 text-sm leading-6 text-slate-600">
-          Marketplace browse surface for verified agents discovered through ENS.
+          Marketplace browse surface for verified agents discovered through ENS
+          and confirmed against the World Chain registry.
         </p>
       </section>
 
