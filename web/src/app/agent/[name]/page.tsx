@@ -1,5 +1,6 @@
 import { ReputationBadge } from '@/components/ReputationBadge';
 import { resolveAgentProfile } from '@/lib/ens';
+import { getAgentReputation } from '@/lib/hedera';
 import { getAgentListingByEnsName } from '@/lib/marketplace';
 import { notFound } from 'next/navigation';
 
@@ -32,6 +33,8 @@ export default async function AgentDetailPage({
   }
 
   const ensProfile = await resolveAgentProfile(decodedName);
+  const reputation = await getAgentReputation(decodedName);
+  const isLiveReputation = reputation.mode === 'live';
   const records =
     typeof ensProfile === 'object' &&
     ensProfile !== null &&
@@ -68,8 +71,10 @@ export default async function AgentDetailPage({
       </div>
 
       <ReputationBadge
-        completions={agent.completionCount}
-        rating={agent.reputationScore}
+        completions={
+          isLiveReputation ? reputation.completions : agent.completionCount
+        }
+        rating={isLiveReputation ? reputation.rating : agent.reputationScore}
       />
 
       <p className="text-sm leading-6 text-slate-600">{description}</p>
@@ -135,6 +140,16 @@ export default async function AgentDetailPage({
           </span>
           <span className="break-all font-mono text-sm text-slate-900">
             {paymentAddress ?? 'Not set'}
+          </span>
+        </div>
+        <div className="grid gap-1">
+          <span className="text-sm uppercase tracking-[0.2em] text-slate-500">
+            Hedera reputation
+          </span>
+          <span className="text-slate-900">
+            {isLiveReputation ? reputation.rating : agent.reputationScore} rating
+            {' • '}
+            {isLiveReputation ? reputation.completions : agent.completionCount} completions
           </span>
         </div>
       </section>

@@ -6,6 +6,7 @@ interface AgentCardProps {
   description: string;
   price: string;
   reputation: string;
+  completions?: number;
   verifiedHuman?: boolean;
 }
 
@@ -15,6 +16,7 @@ export function AgentCard({
   description,
   price,
   reputation,
+  completions = 0,
   verifiedHuman = true,
 }: AgentCardProps) {
   const encodedName = encodeURIComponent(name);
@@ -42,6 +44,9 @@ export function AgentCard({
           </span>
           <span className="rounded-full bg-white/70 px-3 py-1.5 text-slate-600">
             Rating {reputation}
+          </span>
+          <span className="rounded-full bg-white/70 px-3 py-1.5 text-slate-600">
+            {completions} completions
           </span>
         </div>
       </div>

@@ -1,4 +1,5 @@
 import { AgentCard } from '@/components/AgentCard';
+import { getAgentReputationMap } from '@/lib/hedera';
 import { listAgentListings } from '@/lib/marketplace';
 import Link from 'next/link';
 
@@ -18,6 +19,9 @@ export default async function ExplorePage({
       : 'All';
   const agents = await listAgentListings(
     activeCategory === 'All' ? null : activeCategory,
+  );
+  const reputationMap = await getAgentReputationMap(
+    agents.map((agent) => agent.ensName),
   );
 
   return (
@@ -61,16 +65,24 @@ export default async function ExplorePage({
         </div>
       ) : (
         <div className="grid gap-4 md:grid-cols-2">
-          {agents.map((agent) => (
+          {agents.map((agent) => {
+            const metrics = reputationMap.get(agent.ensName);
+            const isLive = metrics?.mode === 'live';
+
+            return (
             <AgentCard
               key={agent.ensName}
               category={agent.category}
+              completions={
+                isLive ? (metrics?.completions ?? agent.completionCount) : agent.completionCount
+              }
               description={agent.description}
               name={agent.ensName}
               price={`$${agent.priceUsdc} / request`}
-              reputation={agent.reputationScore}
+              reputation={isLive ? (metrics?.rating ?? agent.reputationScore) : agent.reputationScore}
             />
-          ))}
+            );
+          })}
         </div>
       )}
     </main>

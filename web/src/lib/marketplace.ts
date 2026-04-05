@@ -178,6 +178,22 @@ export async function listAgentListings(category?: string | null) {
   return result.rows.map(mapAgentListing);
 }
 
+export async function listAgentListingsForHuman(worldNullifierHash: string) {
+  await ensureDatabaseSchema();
+
+  const result = await getPool().query<AgentListingRow>(
+    `
+      SELECT *
+      FROM agent_listings
+      WHERE world_nullifier_hash = $1
+      ORDER BY created_at DESC
+    `,
+    [worldNullifierHash],
+  );
+
+  return result.rows.map(mapAgentListing);
+}
+
 export async function saveAgentListing(input: SaveAgentListingInput) {
   await ensureDatabaseSchema();
 
