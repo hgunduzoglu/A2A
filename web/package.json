@@ -10,7 +10,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint ."
+    "lint": "eslint .",
+    "hedera:create-topic": "node ./scripts/create-hedera-topic.mjs"
   },
   "dependencies": {
     "@ensdomains/ens-contracts": "^1.7.0",
