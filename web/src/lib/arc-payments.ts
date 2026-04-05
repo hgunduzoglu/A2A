@@ -214,6 +214,143 @@ function buildMockAgentResult(listing: AgentListing, prompt: string) {
   };
 }
 
+function toHighlightList(input: unknown) {
+  if (!Array.isArray(input)) {
+    return [];
+  }
+
+  return input
+    .map((value) => String(value).trim())
+    .filter(Boolean)
+    .slice(0, 6);
+}
+
+function summarizeObject(value: Record<string, unknown>) {
+  const preferredKeys = ['summary', 'result', 'output', 'message', 'answer'];
+
+  for (const key of preferredKeys) {
+    const candidate = value[key];
+
+    if (typeof candidate === 'string' && candidate.trim()) {
+      return candidate.trim();
+    }
+  }
+
+  return JSON.stringify(value).slice(0, 220);
+}
+
+function normalizeLiveAgentResult(
+  listing: AgentListing,
+  prompt: string,
+  payload: unknown,
+  upstreamStatus: number,
+) {
+  if (payload && typeof payload === 'object' && !Array.isArray(payload)) {
+    const value = payload as Record<string, unknown>;
+    const summary =
+      typeof value.summary === 'string' && value.summary.trim()
+        ? value.summary.trim()
+        : `${listing.agentName} returned a live response.`;
+    const verdict =
+      typeof value.verdict === 'string' && value.verdict.trim()
+        ? value.verdict.trim()
+        : summarizeObject(value);
+    const highlights = [
+      ...toHighlightList(value.highlights),
+      `Endpoint source: ${listing.endpoint}`,
+      `Upstream status: ${upstreamStatus}`,
+    ].slice(0, 6);
+
+    return {
+      summary,
+      prompt:
+        typeof value.prompt === 'string' && value.prompt.trim()
+          ? value.prompt.trim()
+          : prompt,
+      highlights,
+      verdict,
+      raw: payload,
+    };
+  }
+
+  if (typeof payload === 'string' && payload.trim()) {
+    return {
+      summary: `${listing.agentName} returned a live response.`,
+      prompt,
+      highlights: [
+        `Endpoint source: ${listing.endpoint}`,
+        `Upstream status: ${upstreamStatus}`,
+      ],
+      verdict: payload.trim(),
+      raw: payload,
+    };
+  }
+
+  return {
+    ...buildMockAgentResult(listing, prompt),
+    summary: `${listing.agentName} responded, but no structured payload was returned.`,
+    highlights: [
+      `Category: ${listing.category}`,
+      `Endpoint source: ${listing.endpoint}`,
+      `Upstream status: ${upstreamStatus}`,
+    ],
+    raw: payload,
+  };
+}
+
+async function parseEndpointResponse(response: Response) {
+  const contentType = response.headers.get('content-type') ?? '';
+
+  if (contentType.includes('application/json')) {
+    return response.json().catch(() => null);
+  }
+
+  return response.text().catch(() => '');
+}
+
+async function invokeAgentEndpoint(
+  listing: AgentListing,
+  prompt: string,
+  requester: string | null,
+) {
+  const response = await fetch(listing.endpoint, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Accept: 'application/json, text/plain;q=0.9, */*;q=0.8',
+      'User-Agent': 'A2A/0.1',
+    },
+    body: JSON.stringify({
+      prompt,
+      agent: {
+        ensName: listing.ensName,
+        category: listing.category,
+        capabilities: listing.capabilities,
+        priceUsdc: listing.priceUsdc,
+      },
+      requester: requester ?? undefined,
+      source: 'a2a-mini-app',
+    }),
+    cache: 'no-store',
+    signal: AbortSignal.timeout(15_000),
+  });
+  const payload = await parseEndpointResponse(response);
+
+  if (!response.ok) {
+    let message = `Agent endpoint returned ${response.status}.`;
+
+    if (typeof payload === 'string' && payload.trim()) {
+      message = payload.trim().slice(0, 240);
+    } else if (payload && typeof payload === 'object' && 'message' in payload) {
+      message = String(payload.message).slice(0, 240);
+    }
+
+    throw new Error(message);
+  }
+
+  return normalizeLiveAgentResult(listing, prompt, payload, response.status);
+}
+
 export function getX402ClientConfig() {
   return {
     network: getX402Config().network as `${string}:${string}`,
@@ -320,7 +457,30 @@ export async function settleNanopayment(
   context: Extract<PreparedPaymentContext, { type: 'ready' }>,
 ) {
   const httpServer = await getPaymentServer();
-  const result = buildMockAgentResult(context.listing, context.payload.prompt);
+  let result;
+
+  try {
+    result = await invokeAgentEndpoint(
+      context.listing,
+      context.payload.prompt,
+      null,
+    );
+  } catch (error) {
+    return {
+      type: 'response' as const,
+      response: NextResponse.json(
+        {
+          ok: false,
+          message:
+            error instanceof Error
+              ? error.message
+              : 'Agent endpoint invocation failed.',
+        },
+        { status: 502 },
+      ),
+    };
+  }
+
   const responseBody = {
     ok: true,
     mode: 'x402',
