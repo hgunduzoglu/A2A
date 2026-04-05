@@ -91,25 +91,56 @@ export async function POST(request: Request) {
     );
   }
 
-  const ensRecord = await registerAgentSubname({
-    ...enrichedPayload,
-    credentialHash:
-      typeof credential.credentialHash === 'string'
-        ? credential.credentialHash
-        : undefined,
-  });
-  const registryRecord = await registerAgentOnWorldChain({
-    ensName,
-    nullifierHash: session.nullifier,
-    credentialHash:
-      typeof credential.credentialHash === 'string'
-        ? credential.credentialHash
-        : null,
-    capabilities: Array.isArray(payload.capabilities)
-      ? payload.capabilities.map((value: unknown) => String(value))
-      : [],
-    priceUsdc: typeof payload.price === 'string' ? payload.price : '0',
-  });
+  let ensRecord;
+
+  try {
+    ensRecord = await registerAgentSubname({
+      ...enrichedPayload,
+      credentialHash:
+        typeof credential.credentialHash === 'string'
+          ? credential.credentialHash
+          : undefined,
+    });
+  } catch (error) {
+    return NextResponse.json(
+      {
+        ok: false,
+        message:
+          error instanceof Error
+            ? `ENS registration failed: ${error.message}`
+            : 'ENS subname registration failed.',
+      },
+      { status: 502 },
+    );
+  }
+
+  let registryRecord;
+
+  try {
+    registryRecord = await registerAgentOnWorldChain({
+      ensName,
+      nullifierHash: session.nullifier,
+      credentialHash:
+        typeof credential.credentialHash === 'string'
+          ? credential.credentialHash
+          : null,
+      capabilities: Array.isArray(payload.capabilities)
+        ? payload.capabilities.map((value: unknown) => String(value))
+        : [],
+      priceUsdc: typeof payload.price === 'string' ? payload.price : '0',
+    });
+  } catch (error) {
+    return NextResponse.json(
+      {
+        ok: false,
+        message:
+          error instanceof Error
+            ? `ENS registered but World Chain failed: ${error.message}. Try again — the retry is safe.`
+            : 'ENS registered but World Chain registration failed. Try again — the retry is safe.',
+      },
+      { status: 502 },
+    );
+  }
 
   return NextResponse.json({
     ok: true,

@@ -1,25 +1,10 @@
 import { AgentRequestComposer } from '@/components/AgentRequestComposer';
 import { getX402ClientConfig } from '@/lib/arc-payments';
-import { resolveAgentProfile } from '@/lib/ens';
 import { listAgentListingsForHuman, getAgentListingByEnsName } from '@/lib/agents';
 import { WORLD_ID_SESSION_COOKIE, decodeWorldIdSession } from '@/lib/worldid';
 import { cookies } from 'next/headers';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-
-function getEnsRecords(profile: Awaited<ReturnType<typeof resolveAgentProfile>>) {
-  if (
-    typeof profile === 'object' &&
-    profile !== null &&
-    'records' in profile &&
-    profile.records &&
-    typeof profile.records === 'object'
-  ) {
-    return profile.records as Record<string, string>;
-  }
-
-  return {};
-}
 
 export default async function ComposeAgentPage({
   params,
@@ -67,8 +52,6 @@ export default async function ComposeAgentPage({
   const callerAgents = (await listAgentListingsForHuman(session.nullifier)).filter(
     (agent) => agent.ensName !== targetAgent.ensName,
   );
-  const targetProfile = await resolveAgentProfile(targetAgent.ensName);
-  const targetRecords = getEnsRecords(targetProfile);
   const x402 = getX402ClientConfig();
 
   return (
@@ -105,10 +88,8 @@ export default async function ComposeAgentPage({
           network={x402.network}
           priceUsdc={targetAgent.priceUsdc}
           targetVerification={{
-            verificationLevel:
-              targetRecords['world-verification'] ?? targetAgent.verificationLevel,
-            credentialHash:
-              targetRecords['agent-credential'] ?? targetAgent.credentialHash,
+            verificationLevel: targetAgent.verificationLevel,
+            credentialHash: targetAgent.credentialHash,
           }}
         />
       )}
