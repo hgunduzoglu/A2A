@@ -3,6 +3,7 @@ import {
   createPublicClient,
   createWalletClient,
   http,
+  isAddress,
   namehash,
   zeroAddress,
 } from 'viem';
@@ -20,6 +21,7 @@ type AgentRegistrationInput = Record<string, unknown> & {
   capabilities?: string[];
   credentialHash?: string;
   category?: string;
+  paymentAddress?: string;
 };
 
 const AGENT_TEXT_RECORD_KEYS = [
@@ -68,6 +70,14 @@ function getTextRecordValue(value: unknown, fallback = '') {
   }
 
   return String(value);
+}
+
+function getPaymentAddress(value: unknown, fallback: `0x${string}`) {
+  if (typeof value === 'string' && isAddress(value)) {
+    return value as `0x${string}`;
+  }
+
+  return fallback;
 }
 
 function getEnsClients() {
@@ -154,7 +164,7 @@ export async function registerAgentSubname(input: AgentRegistrationInput) {
     ['agent-description', getTextRecordValue(input.description)],
     ['agent-price', getTextRecordValue(input.price)],
     ['agent-currency', 'USDC'],
-    ['payment-address', account.address],
+    ['payment-address', getPaymentAddress(input.paymentAddress, account.address)],
     ['agent-endpoint', getTextRecordValue(input.endpoint)],
   ] as const satisfies readonly (readonly [typeof AGENT_TEXT_RECORD_KEYS[number], string])[];
 

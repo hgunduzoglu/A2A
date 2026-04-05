@@ -5,7 +5,8 @@
   "scripts": {
     "compile": "hardhat compile",
     "test": "hardhat test",
-    "clean": "hardhat clean"
+    "clean": "hardhat clean",
+    "deploy:worldchain": "hardhat ignition deploy ./ignition/modules/RegistryOnly.ts --network worldchain"
   },
   "devDependencies": {
     "@nomicfoundation/hardhat-ignition": "^3.1.1",

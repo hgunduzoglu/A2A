@@ -12,6 +12,7 @@
     "build": "npm run build -w ./web",
     "lint": "npm run lint -w ./web",
     "contracts:compile": "fnm exec --using=22 npm run compile -w ./contracts",
-    "contracts:test": "fnm exec --using=22 npm run test -w ./contracts"
+    "contracts:test": "fnm exec --using=22 npm run test -w ./contracts",
+    "contracts:deploy:worldchain": "fnm exec --using=22 npm run deploy:worldchain -w ./contracts"
   }
 }

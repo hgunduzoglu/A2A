@@ -49,6 +49,8 @@ export async function ensureDatabaseSchema() {
         ens_create_tx_hash TEXT,
         ens_text_record_tx_hashes JSONB NOT NULL DEFAULT '[]'::jsonb,
         payment_address TEXT,
+        registry_contract_address TEXT,
+        registry_tx_hash TEXT,
         registration_mode TEXT NOT NULL DEFAULT 'live',
         status TEXT NOT NULL DEFAULT 'active',
         completion_count INTEGER NOT NULL DEFAULT 0,
@@ -56,6 +58,12 @@ export async function ensureDatabaseSchema() {
         created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
         updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
       );
+
+      ALTER TABLE agent_listings
+        ADD COLUMN IF NOT EXISTS registry_contract_address TEXT;
+
+      ALTER TABLE agent_listings
+        ADD COLUMN IF NOT EXISTS registry_tx_hash TEXT;
 
       CREATE INDEX IF NOT EXISTS idx_agent_listings_category
         ON agent_listings (category);

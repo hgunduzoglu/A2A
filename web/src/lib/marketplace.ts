@@ -18,6 +18,8 @@ interface AgentListingRow {
   ens_create_tx_hash: string | null;
   ens_text_record_tx_hashes: string[] | string;
   payment_address: string | null;
+  registry_contract_address: string | null;
+  registry_tx_hash: string | null;
   registration_mode: string;
   status: string;
   completion_count: number;
@@ -44,6 +46,8 @@ export interface AgentListing {
   ensCreateTxHash: string | null;
   ensTextRecordTxHashes: string[];
   paymentAddress: string | null;
+  registryContractAddress: string | null;
+  registryTxHash: string | null;
   registrationMode: string;
   status: string;
   completionCount: number;
@@ -68,6 +72,8 @@ export interface SaveAgentListingInput {
   ensCreateTxHash?: string | null;
   ensTextRecordTxHashes?: string[];
   paymentAddress?: string | null;
+  registryContractAddress?: string | null;
+  registryTxHash?: string | null;
   registrationMode?: string;
 }
 
@@ -103,6 +109,8 @@ function mapAgentListing(row: AgentListingRow): AgentListing {
     ensCreateTxHash: row.ens_create_tx_hash,
     ensTextRecordTxHashes: parseJsonArray(row.ens_text_record_tx_hashes),
     paymentAddress: row.payment_address,
+    registryContractAddress: row.registry_contract_address,
+    registryTxHash: row.registry_tx_hash,
     registrationMode: row.registration_mode,
     status: row.status,
     completionCount: row.completion_count,
@@ -191,6 +199,8 @@ export async function saveAgentListing(input: SaveAgentListingInput) {
         ens_create_tx_hash,
         ens_text_record_tx_hashes,
         payment_address,
+        registry_contract_address,
+        registry_tx_hash,
         registration_mode,
         updated_at
       )
@@ -211,6 +221,8 @@ export async function saveAgentListing(input: SaveAgentListingInput) {
         $14::jsonb,
         $15,
         $16,
+        $17,
+        $18,
         NOW()
       )
       ON CONFLICT (ens_name) DO UPDATE SET
@@ -227,6 +239,8 @@ export async function saveAgentListing(input: SaveAgentListingInput) {
         ens_create_tx_hash = EXCLUDED.ens_create_tx_hash,
         ens_text_record_tx_hashes = EXCLUDED.ens_text_record_tx_hashes,
         payment_address = EXCLUDED.payment_address,
+        registry_contract_address = EXCLUDED.registry_contract_address,
+        registry_tx_hash = EXCLUDED.registry_tx_hash,
         registration_mode = EXCLUDED.registration_mode,
         updated_at = NOW()
       RETURNING *
@@ -247,6 +261,8 @@ export async function saveAgentListing(input: SaveAgentListingInput) {
       input.ensCreateTxHash ?? null,
       JSON.stringify(input.ensTextRecordTxHashes ?? []),
       input.paymentAddress ?? null,
+      input.registryContractAddress ?? null,
+      input.registryTxHash ?? null,
       input.registrationMode ?? 'live',
     ],
   );

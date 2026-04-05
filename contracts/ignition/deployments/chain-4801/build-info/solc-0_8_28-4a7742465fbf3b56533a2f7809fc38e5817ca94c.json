@@ -1,0 +1,40 @@
+{
+  "_format": "hh3-sol-build-info-1",
+  "id": "solc-0_8_28-4a7742465fbf3b56533a2f7809fc38e5817ca94c",
+  "solcVersion": "0.8.28",
+  "solcLongVersion": "0.8.28+commit.7893614a",
+  "compilerType": "solc",
+  "userSourceNameMap": {
+    "contracts/AgentRegistry.sol": "project/contracts/AgentRegistry.sol"
+  },
+  "input": {
+    "language": "Solidity",
+    "settings": {
+      "evmVersion": "cancun",
+      "optimizer": {
+        "enabled": true,
+        "runs": 200
+      },
+      "outputSelection": {
+        "*": {
+          "": [
+            "ast"
+          ],
+          "*": [
+            "abi",
+            "evm.bytecode",
+            "evm.deployedBytecode",
+            "evm.methodIdentifiers",
+            "metadata"
+          ]
+        }
+      },
+      "remappings": []
+    },
+    "sources": {
+      "project/contracts/AgentRegistry.sol": {
+        "content": "// SPDX-License-Identifier: MIT\npragma solidity ^0.8.28;\n\ncontract AgentRegistry {\n  struct Agent {\n    string ensName;\n    bytes32 nullifierHash;\n    bytes32 agentKitCredential;\n    string[] capabilities;\n    uint256 pricePerRequest;\n    bool active;\n  }\n\n  mapping(string => Agent) private agents;\n  mapping(bytes32 => uint256) private agentCountByNullifier;\n  string[] private agentNames;\n\n  event AgentRegistered(\n    string ensName,\n    bytes32 indexed nullifierHash,\n    bytes32 indexed agentKitCredential,\n    uint256 pricePerRequest\n  );\n  event AgentDeactivated(string ensName);\n\n  function registerAgent(\n    string calldata ensName,\n    bytes32 nullifierHash,\n    bytes32 agentKitCredential,\n    string[] calldata capabilities,\n    uint256 pricePerRequest\n  ) external {\n    require(bytes(ensName).length > 0, \"AgentRegistry: empty ENS name\");\n    require(\n      agents[ensName].nullifierHash == bytes32(0),\n      \"AgentRegistry: agent already exists\"\n    );\n    require(\n      agentCountByNullifier[nullifierHash] < 5,\n      \"AgentRegistry: max 5 agents per human\"\n    );\n\n    Agent storage agent = agents[ensName];\n    agent.ensName = ensName;\n    agent.nullifierHash = nullifierHash;\n    agent.agentKitCredential = agentKitCredential;\n    agent.pricePerRequest = pricePerRequest;\n    agent.active = true;\n\n    for (uint256 i = 0; i < capabilities.length; i++) {\n      agent.capabilities.push(capabilities[i]);\n    }\n\n    agentNames.push(ensName);\n    agentCountByNullifier[nullifierHash] += 1;\n\n    emit AgentRegistered(\n      ensName,\n      nullifierHash,\n      agentKitCredential,\n      pricePerRequest\n    );\n  }\n\n  function verifyWorldID(\n    uint256 root,\n    uint256 nullifierHash,\n    uint256[8] calldata proof\n  ) external pure returns (bool) {\n    uint256 checksum = 0;\n\n    for (uint256 i = 0; i < proof.length; i++) {\n      checksum |= proof[i];\n    }\n\n    return root != 0 && nullifierHash != 0 && checksum != 0;\n  }\n\n  function getAgentCount(bytes32 nullifierHash) external view returns (uint256) {\n    return agentCountByNullifier[nullifierHash];\n  }\n\n  function getAgent(\n    string calldata ensName\n  ) external view returns (Agent memory) {\n    return agents[ensName];\n  }\n\n  function deactivateAgent(string calldata ensName) external {\n    require(\n      agents[ensName].nullifierHash != bytes32(0),\n      \"AgentRegistry: unknown agent\"\n    );\n\n    agents[ensName].active = false;\n    emit AgentDeactivated(ensName);\n  }\n\n  function isVerifiedAgent(string calldata ensName) external view returns (bool) {\n    Agent storage agent = agents[ensName];\n    return agent.active && agent.nullifierHash != bytes32(0);\n  }\n\n  function getAllAgents() external view returns (Agent[] memory) {\n    Agent[] memory result = new Agent[](agentNames.length);\n\n    for (uint256 i = 0; i < agentNames.length; i++) {\n      result[i] = agents[agentNames[i]];\n    }\n\n    return result;\n  }\n}\n"
+      }
+    }
+  }
+}

@@ -10,6 +10,7 @@ type AgentFormState = {
   endpoint: string;
   price: string;
   capabilities: string;
+  paymentAddress: string;
 };
 
 type RegisterAgentResponse = {
@@ -22,11 +23,17 @@ type RegisterAgentResponse = {
     price: string;
     capabilities: string[];
     nullifier: string;
+    paymentAddress?: string | null;
   };
   ensRecord?: {
     mode?: string;
     createHash?: string;
     textRecordTransactionHashes?: string[];
+  };
+  registryRecord?: {
+    mode?: string;
+    contractAddress?: string;
+    txHash?: string;
   };
   marketplace?: {
     id: number;
@@ -43,6 +50,7 @@ const initialState: AgentFormState = {
   endpoint: '',
   price: '0.005',
   capabilities: 'market-analysis, sentiment',
+  paymentAddress: '',
 };
 
 interface AgentCreateFormProps {
@@ -114,6 +122,29 @@ export function AgentCreateForm({ nullifier }: AgentCreateFormProps) {
 
       setResult(payload);
     });
+  }
+
+  async function fillWithWorldWallet() {
+    setError(null);
+
+    try {
+      const result = await MiniKit.walletAuth({
+        nonce: crypto.randomUUID().replace(/-/g, ''),
+        statement: 'Use this wallet as the payout address for your A2A agent.',
+      });
+
+      updateField('paymentAddress', result.data.address);
+      await MiniKit.sendHapticFeedback({
+        hapticsType: 'notification',
+        style: 'success',
+      }).catch(() => undefined);
+    } catch (walletError) {
+      setError(
+        walletError instanceof Error
+          ? walletError.message
+          : 'Unable to load your World wallet address.',
+      );
+    }
   }
 
   return (
@@ -197,6 +228,31 @@ export function AgentCreateForm({ nullifier }: AgentCreateFormProps) {
           />
         </label>
 
+        <div className="grid gap-2">
+          <div className="flex items-center justify-between gap-3">
+            <span className="text-sm font-medium text-slate-800">
+              Payment address
+            </span>
+            <button
+              className="rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 transition hover:border-slate-950 hover:text-slate-950"
+              onClick={fillWithWorldWallet}
+              type="button"
+            >
+              Use World wallet
+            </button>
+          </div>
+          <input
+            className="rounded-[22px] border border-slate-200 bg-white/80 px-4 py-3 font-mono text-sm outline-none transition focus:border-slate-950"
+            onChange={(event) => updateField('paymentAddress', event.target.value)}
+            placeholder="0x..."
+            required
+            value={form.paymentAddress}
+          />
+          <p className="text-xs leading-5 text-slate-500">
+            x402 payments will be sent to this address. Use a wallet you control.
+          </p>
+        </div>
+
         <button
           className="mt-2 rounded-[22px] bg-slate-950 px-5 py-3 text-sm font-medium text-white transition disabled:cursor-not-allowed disabled:bg-slate-400"
           disabled={isPending}
@@ -221,6 +277,9 @@ export function AgentCreateForm({ nullifier }: AgentCreateFormProps) {
           <p>Category: {result.agent.category}</p>
           <p>Endpoint: {result.agent.endpoint}</p>
           <p>Price: {result.agent.price} USDC</p>
+          <p className="break-all">
+            Payment address: {result.agent.paymentAddress ?? 'Not set'}
+          </p>
           <p>Capabilities: {result.agent.capabilities.join(', ')}</p>
           {result.marketplace ? (
             <p>
@@ -237,6 +296,14 @@ export function AgentCreateForm({ nullifier }: AgentCreateFormProps) {
             <p>
               ENS text record txs:{' '}
               {result.ensRecord.textRecordTransactionHashes.length}
+            </p>
+          ) : null}
+          {result.registryRecord?.txHash ? (
+            <p className="break-all">World Chain registry tx: {result.registryRecord.txHash}</p>
+          ) : null}
+          {result.registryRecord?.contractAddress ? (
+            <p className="break-all">
+              AgentRegistry: {result.registryRecord.contractAddress}
             </p>
           ) : null}
         </div>
