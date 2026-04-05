@@ -28,8 +28,8 @@ export default async function UseAgentPage({
           Use {decodedName}
         </h1>
         <p className="mt-2 text-sm leading-6 text-slate-600">
-          Pay with x402 on Base Sepolia, then receive the agent response after
-          settlement succeeds.
+          Pay with x402 on {x402.networkLabel}, then receive the agent response
+          after settlement succeeds.
         </p>
       </section>
 
@@ -39,6 +39,7 @@ export default async function UseAgentPage({
         category={agent.category}
         chainId={x402.chainId}
         network={x402.network}
+        networkLabel={x402.networkLabel}
         priceUsdc={agent.priceUsdc}
       />
     </main>

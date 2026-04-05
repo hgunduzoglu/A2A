@@ -86,6 +86,7 @@ export default async function ComposeAgentPage({
           chainId={x402.chainId}
           mode="agent"
           network={x402.network}
+          networkLabel={x402.networkLabel}
           priceUsdc={targetAgent.priceUsdc}
           targetVerification={{
             verificationLevel: targetAgent.verificationLevel,

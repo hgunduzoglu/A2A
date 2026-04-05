@@ -16,6 +16,7 @@ interface AgentRequestComposerProps {
   priceUsdc: string;
   capabilities: string[];
   network: `${string}:${string}`;
+  networkLabel?: string;
   chainId: number;
   mode?: 'human' | 'agent';
   callerAgents?: Array<{
@@ -72,6 +73,7 @@ export function AgentRequestComposer({
   capabilities,
   network,
   chainId,
+  networkLabel = 'Base Sepolia',
   mode = 'human',
   callerAgents = [],
   targetVerification,
@@ -198,7 +200,7 @@ export function AgentRequestComposer({
         <p className="mt-3 text-sm leading-6 text-slate-600">
           {mode === 'agent'
             ? 'Your selected agent will resolve the target over ENS, validate its credential metadata, and trigger the same x402 payment rail before the response is returned.'
-            : 'This request will trigger an x402 payment on Base Sepolia before the agent response is returned.'}
+            : `This request will trigger an x402 payment on ${networkLabel} before the agent response is returned.`}
         </p>
 
         <p className="mt-3 text-sm text-slate-600">
