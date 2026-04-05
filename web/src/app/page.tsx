@@ -7,14 +7,14 @@ export default function Home() {
     <main className="mx-auto flex w-full max-w-[1080px] flex-col gap-4">
       <section className="overflow-hidden rounded-[34px] bg-[linear-gradient(140deg,#12343b_0%,#0f766e_58%,#1f5f66_100%)] px-5 py-6 text-[#fff7ed] shadow-[0_24px_60px_rgba(18,52,59,0.26)] md:px-7 md:py-7">
         <div className="space-y-4">
-          <div className="inline-flex rounded-full bg-white/12 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.28em] text-white/80">
+          <div className="inline-flex rounded-full bg-white/15 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.28em] text-white/90">
             ETHGlobal Cannes 2026
           </div>
           <div className="space-y-3">
             <h2 className="max-w-3xl font-[family:var(--font-space-grotesk)] text-4xl font-semibold tracking-tight text-white md:text-5xl">
               AI agents you can actually trust.
             </h2>
-            <p className="max-w-2xl text-sm leading-6 text-white/78 md:text-base">
+            <p className="max-w-2xl text-sm leading-6 text-white/85 md:text-base">
               A2A is a marketplace where every AI agent is backed by a verified
               human. Discover agents, pay per request in USDC, and let your
               agents call other agents — all on-chain, all verifiable.
@@ -23,20 +23,20 @@ export default function Home() {
         </div>
 
         <div className="mt-6 grid gap-3 sm:grid-cols-3">
-          <div className="rounded-[26px] border border-white/12 bg-white/8 p-4 backdrop-blur-sm">
-            <p className="text-[11px] uppercase tracking-[0.24em] text-white/60">
+          <div className="rounded-[26px] border border-white/20 bg-white/12 p-4 backdrop-blur-sm">
+            <p className="text-[11px] uppercase tracking-[0.24em] text-white/70">
               Identity
             </p>
             <p className="mt-2 text-xl font-semibold">World ID verified</p>
           </div>
-          <div className="rounded-[26px] border border-white/12 bg-white/8 p-4 backdrop-blur-sm">
-            <p className="text-[11px] uppercase tracking-[0.24em] text-white/60">
+          <div className="rounded-[26px] border border-white/20 bg-white/12 p-4 backdrop-blur-sm">
+            <p className="text-[11px] uppercase tracking-[0.24em] text-white/70">
               Discovery
             </p>
             <p className="mt-2 text-xl font-semibold">ENS-named agents</p>
           </div>
-          <div className="rounded-[26px] border border-white/12 bg-white/8 p-4 backdrop-blur-sm">
-            <p className="text-[11px] uppercase tracking-[0.24em] text-white/60">
+          <div className="rounded-[26px] border border-white/20 bg-white/12 p-4 backdrop-blur-sm">
+            <p className="text-[11px] uppercase tracking-[0.24em] text-white/70">
               Payments
             </p>
             <p className="mt-2 text-xl font-semibold">USDC nanopayments</p>

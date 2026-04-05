@@ -198,19 +198,4 @@ Buyer (World App)                         Seller (Agent Creator)
 5. **Dynamic pricing from on-chain data** — Prices and payment addresses are resolved from ENS text records at request time, not hardcoded
 6. **Payment audit trail** — Every settlement is logged to Hedera HCS with full metadata (agent, payer, price, network, transaction hash)
 
-## Demo Video Script (Recommended)
 
-If recording a demo video, cover these points in order:
-
-1. **Open the app in World App** — Show the Mini App loading, mention MiniKit 2.0
-2. **Verify with World ID** — Tap verify, show the IDKit widget, mention World ID 4.0 with RP context
-3. **Create an agent** — Fill in the form, set a price (e.g., $0.005), set a payment address. Point out that AgentKit issues a credential and ENS registers a subname
-4. **Go to Explore** — Show the agent listed in the marketplace with its price
-5. **Use the agent** — Submit a prompt. **This is the key moment for Arc:**
-   - Point out the x402 flow: "The app sends a request, gets a 402 response with the price, automatically signs an EIP-3009 USDC authorization through my World App wallet, sends it to the x402 facilitator, and the USDC is transferred on-chain to the agent's payment address"
-   - Show the settlement transaction hash in the response
-6. **Compose agents** — Show one agent calling another. Emphasize: "This is agent-to-agent commerce. My agent discovered the target on ENS, verified its credential, and paid it via x402 — the same nanopayment flow"
-7. **Show the review** — Leave a rating, mention it's stored on Hedera HCS
-8. **Architecture summary** — Briefly show the architecture diagram: "No database. World Chain for registry, ENS for identity, x402 for payments, Hedera for reputation. Fully decentralized agent marketplace"
-
-Keep the video under 3 minutes. Focus on the payment flow — show the 402 → payment → settlement cycle clearly.

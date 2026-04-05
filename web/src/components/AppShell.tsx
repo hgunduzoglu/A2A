@@ -104,7 +104,7 @@ export function AppShell({ children }: { children: ReactNode }) {
 
       <div className="relative mx-auto flex min-h-screen w-full max-w-[1100px] flex-col">
         <header className="sticky top-0 z-30 px-4 pb-3 pt-[calc(var(--safe-top)+0.875rem)] md:px-6">
-          <div className="rounded-[30px] border border-white/70 bg-[rgba(255,249,241,0.82)] px-4 py-4 shadow-[0_18px_40px_rgba(19,34,28,0.08)] backdrop-blur-xl">
+          <div className="rounded-[30px] border border-white/70 bg-[rgba(255,249,241,0.92)] px-4 py-4 shadow-[0_18px_40px_rgba(19,34,28,0.08)] backdrop-blur-xl">
             <div className="flex items-start justify-between gap-3">
               <div className="space-y-1">
                 <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-teal-800/70">
@@ -135,7 +135,7 @@ export function AppShell({ children }: { children: ReactNode }) {
         </div>
 
         <nav className="sticky bottom-0 z-30 px-4 pb-[calc(var(--safe-bottom)+0.875rem)] md:px-6">
-          <div className="mx-auto max-w-[560px] rounded-[32px] border border-white/70 bg-[rgba(255,249,241,0.9)] p-2 shadow-[0_20px_45px_rgba(19,34,28,0.12)] backdrop-blur-xl">
+          <div className="mx-auto max-w-[560px] rounded-[32px] border border-white/70 bg-[rgba(255,249,241,0.95)] p-2 shadow-[0_20px_45px_rgba(19,34,28,0.12)] backdrop-blur-xl">
             <div className="grid grid-cols-4 gap-1">
               {navItems.map((item) => {
                 const active = isItemActive(pathname, item);

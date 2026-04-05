@@ -1,34 +1,20 @@
 'use client';
 
 import {
-  IDKitRequestWidget,
-  IDKitResult,
-  RpContext,
+  useIDKitRequest,
+  type IDKitResult,
+  type RpContext,
   orbLegacy,
 } from '@worldcoin/idkit';
 import { MiniKit } from '@worldcoin/minikit-js';
 import { useMiniKit } from '@worldcoin/minikit-js/minikit-provider';
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 type VerificationStatus =
-  | {
-      type: 'idle';
-      message: string;
-    }
-  | {
-      type: 'pending';
-      message: string;
-    }
-  | {
-      type: 'success';
-      message: string;
-      nullifier: string | null;
-      mode: 'live' | 'mock';
-    }
-  | {
-      type: 'error';
-      message: string;
-    };
+  | { type: 'idle'; message: string }
+  | { type: 'pending'; message: string }
+  | { type: 'success'; message: string; nullifier: string | null; mode: 'live' | 'mock' }
+  | { type: 'error'; message: string };
 
 interface RpSignatureResponse {
   ok: boolean;
@@ -50,105 +36,125 @@ const defaultAction = process.env.NEXT_PUBLIC_ACTION_ID ?? 'verify-human';
 
 export function VerifyButton() {
   const { isInstalled } = useMiniKit();
-  const [isOpen, setIsOpen] = useState(false);
   const [rpContext, setRpContext] = useState<RpContext | null>(null);
   const [action, setAction] = useState(defaultAction);
   const [status, setStatus] = useState<VerificationStatus>({
     type: 'idle',
-    message: 'Verification not started yet.',
+    message: '',
   });
 
-  async function verifyWithBackend(
-    payload: IDKitResult | Record<string, unknown>,
-  ) {
-    const response = await fetch('/api/verify-worldid', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(payload),
-    });
+  const placeholderContext: RpContext = {
+    rp_id: '',
+    nonce: '',
+    created_at: 0,
+    expires_at: 0,
+    signature: '',
+  };
 
-    const result = (await response.json()) as VerificationResponse;
+  const flow = useIDKitRequest({
+    app_id: appId ?? ('app_placeholder' as `app_${string}`),
+    action,
+    rp_context: rpContext ?? placeholderContext,
+    allow_legacy_proofs: true,
+    preset: orbLegacy(),
+  });
 
-    if (!response.ok || !result.ok) {
+  const handledResultRef = useRef<IDKitResult | null>(null);
+
+  useEffect(() => {
+    if (!flow.result || flow.result === handledResultRef.current) return;
+    handledResultRef.current = flow.result;
+
+    void (async () => {
       try {
-        await MiniKit.sendHapticFeedback({
-          hapticsType: 'notification',
-          style: 'error',
+        const response = await fetch('/api/verify-worldid', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(flow.result),
         });
-      } catch {}
-      throw new Error(result.message || 'Proof verification failed.');
-    }
+        const data = (await response.json()) as VerificationResponse;
 
-    try {
-      await MiniKit.sendHapticFeedback({
-        hapticsType: 'notification',
-        style: 'success',
-      });
-    } catch {}
+        if (!response.ok || !data.ok) {
+          await MiniKit.sendHapticFeedback({ hapticsType: 'notification', style: 'error' }).catch(() => {});
+          setStatus({ type: 'error', message: data.message || 'Verification failed.' });
+          return;
+        }
 
-    setStatus({
-      type: 'success',
-      message: result.message,
-      nullifier: result.nullifier,
-      mode: result.mode,
-    });
-  }
+        await MiniKit.sendHapticFeedback({ hapticsType: 'notification', style: 'success' }).catch(() => {});
+        setStatus({
+          type: 'success',
+          message: data.message,
+          nullifier: data.nullifier,
+          mode: data.mode,
+        });
+      } catch (err) {
+        setStatus({
+          type: 'error',
+          message: err instanceof Error ? err.message : 'Verification failed.',
+        });
+      }
+    })();
+  }, [flow.result]);
 
-  async function runMockVerification(message: string) {
-    setStatus({
-      type: 'pending',
-      message,
-    });
-
-    await verifyWithBackend({
-      action: defaultAction,
-      mockNullifier: crypto.randomUUID(),
-      responses: [],
-    });
-  }
-
-  async function startVerification() {
-    try {
-      await MiniKit.sendHapticFeedback({
-        hapticsType: 'selection-changed',
-      });
-    } catch {}
-
-    setStatus({
-      type: 'pending',
-      message: 'Preparing verification request...',
-    });
-
-    const response = await fetch('/api/rp-signature', {
-      method: 'POST',
-    });
-    const result = (await response.json()) as RpSignatureResponse;
-
-    if (!response.ok || !result.ok) {
+  useEffect(() => {
+    if (flow.errorCode) {
       setStatus({
         type: 'error',
-        message: result.message || 'Unable to prepare World ID verification.',
+        message: `World ID error: ${flow.errorCode}`,
       });
-      return;
     }
+  }, [flow.errorCode]);
 
-    setAction(result.action);
+  async function startVerification() {
+    await MiniKit.sendHapticFeedback({ hapticsType: 'selection-changed' }).catch(() => {});
 
-    if (result.mode === 'mock' || !result.rp_context || !appId) {
-      await runMockVerification(result.message);
-      return;
+    setStatus({ type: 'pending', message: 'Preparing...' });
+
+    try {
+      const response = await fetch('/api/rp-signature', { method: 'POST' });
+      const result = (await response.json()) as RpSignatureResponse;
+
+      if (!response.ok || !result.ok) {
+        setStatus({ type: 'error', message: result.message || 'Failed to prepare verification.' });
+        return;
+      }
+
+      setAction(result.action);
+
+      if (result.mode === 'mock' || !result.rp_context || !appId) {
+        setStatus({ type: 'pending', message: 'Running mock verification...' });
+        const mockResponse = await fetch('/api/verify-worldid', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            action: defaultAction,
+            mockNullifier: crypto.randomUUID(),
+            responses: [],
+          }),
+        });
+        const mockData = (await mockResponse.json()) as VerificationResponse;
+        if (mockData.ok) {
+          await MiniKit.sendHapticFeedback({ hapticsType: 'notification', style: 'success' }).catch(() => {});
+          setStatus({ type: 'success', message: mockData.message, nullifier: mockData.nullifier, mode: 'mock' });
+        } else {
+          setStatus({ type: 'error', message: mockData.message });
+        }
+        return;
+      }
+
+      setRpContext(result.rp_context);
+      setStatus({ type: 'pending', message: 'Approve the verification in World App...' });
+
+      // Small delay to let react update rpContext before opening flow
+      setTimeout(() => {
+        flow.open();
+      }, 100);
+    } catch (err) {
+      setStatus({
+        type: 'error',
+        message: err instanceof Error ? err.message : 'Failed to start verification.',
+      });
     }
-
-    setRpContext(result.rp_context);
-    setIsOpen(true);
-    setStatus({
-      type: 'pending',
-      message: isInstalled
-        ? 'Open World App and approve the verification request.'
-        : 'Waiting for a World App verification connection.',
-    });
   }
 
   return (
@@ -156,7 +162,7 @@ export function VerifyButton() {
       <div className="flex items-start justify-between gap-3">
         <div className="space-y-1">
           <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-teal-800/70">
-            World ID gate
+            World ID
           </p>
           <h3 className="font-[family:var(--font-space-grotesk)] text-2xl font-semibold tracking-tight text-slate-950">
             Prove you are human
@@ -166,10 +172,10 @@ export function VerifyButton() {
           className={`rounded-full px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] ${
             isInstalled
               ? 'bg-emerald-100 text-emerald-800'
-              : 'bg-white text-slate-600'
+              : 'bg-white/80 text-slate-500'
           }`}
         >
-          {isInstalled ? 'Native flow' : 'Preview mode'}
+          {isInstalled ? 'World App' : 'Browser'}
         </div>
       </div>
 
@@ -179,69 +185,36 @@ export function VerifyButton() {
       </p>
 
       <div className="mt-5 flex flex-col gap-3">
-      <button
-        className="rounded-[22px] bg-slate-950 px-4 py-3 text-sm font-medium text-white transition disabled:cursor-not-allowed disabled:bg-slate-400"
-        disabled={status.type === 'pending'}
-        onClick={() => void startVerification()}
-        type="button"
-      >
-        {status.type === 'pending'
-          ? 'Preparing verification...'
-          : 'Verify with World ID'}
-      </button>
+        <button
+          className="rounded-[22px] bg-slate-950 px-4 py-3.5 text-sm font-semibold text-white transition active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-40"
+          disabled={status.type === 'pending'}
+          onClick={() => void startVerification()}
+          type="button"
+        >
+          {status.type === 'pending' ? 'Verifying...' : 'Verify with World ID'}
+        </button>
 
-      <p className="text-sm text-slate-600">{status.message}</p>
+        {status.type === 'pending' ? (
+          <p className="text-center text-sm text-slate-500">{status.message}</p>
+        ) : null}
 
-      {status.type === 'success' ? (
-        <div className="rounded-[22px] border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
-          <p className="font-medium">Verified in {status.mode} mode</p>
-          {status.nullifier ? (
-            <p className="mt-1 break-all font-mono text-xs">
-              nullifier: {status.nullifier}
-            </p>
-          ) : null}
-        </div>
-      ) : null}
+        {status.type === 'success' ? (
+          <div className="rounded-[22px] border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
+            <p className="font-medium">Verified</p>
+            {status.nullifier ? (
+              <p className="mt-1 break-all font-mono text-xs text-emerald-700">
+                {status.nullifier}
+              </p>
+            ) : null}
+          </div>
+        ) : null}
 
-      {status.type === 'error' ? (
-        <div className="rounded-[22px] border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
-          {status.message}
-        </div>
-      ) : null}
+        {status.type === 'error' ? (
+          <div className="rounded-[22px] border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+            {status.message}
+          </div>
+        ) : null}
       </div>
-
-      {appId && rpContext ? (
-        <IDKitRequestWidget
-          open={isOpen}
-          onOpenChange={setIsOpen}
-          app_id={appId}
-          action={action}
-          rp_context={rpContext}
-          allow_legacy_proofs
-          preset={orbLegacy()}
-          handleVerify={async (result) => {
-            await verifyWithBackend(result);
-          }}
-          onSuccess={async () => {
-            setStatus((current) =>
-              current.type === 'success'
-                ? current
-                : {
-                    type: 'success',
-                    message: 'World ID verification completed successfully.',
-                    nullifier: null,
-                    mode: 'live',
-                  },
-            );
-          }}
-          onError={async (errorCode) => {
-            setStatus({
-              type: 'error',
-              message: `World ID verification failed: ${errorCode}.`,
-            });
-          }}
-        />
-      ) : null}
     </div>
   );
 }
