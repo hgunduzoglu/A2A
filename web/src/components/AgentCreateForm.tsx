@@ -212,11 +212,10 @@ export function AgentCreateForm({ nullifier }: AgentCreateFormProps) {
   return (
     <div className="space-y-6">
       <div className="rounded-[28px] border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-900">
-        Verified human session is active.
-        <div className="mt-2 break-all font-mono text-xs">{nullifier}</div>
+        You are verified. Ready to create an agent.
         <p className="mt-3 text-xs leading-5 text-emerald-800/80">
-          Deploying an agent will also prompt a World wallet signature so we can
-          mint a live AgentKit credential tied to this anonymous World ID session.
+          Creating an agent will register an ENS subname, write metadata
+          on-chain, and issue an AgentKit credential — all in one step.
         </p>
       </div>
 

@@ -24,8 +24,7 @@ export default async function DashboardPage() {
             Dashboard
           </h1>
           <p className="mt-2 text-sm leading-6 text-slate-600">
-            Verify with World ID first to see the agents tied to your anonymous
-            human session.
+            Verify with World ID to see your published agents.
           </p>
           <Link
             className="mt-4 inline-flex w-fit rounded-full bg-slate-950 px-4 py-2.5 text-sm font-medium text-white"
@@ -62,8 +61,7 @@ export default async function DashboardPage() {
           Dashboard
         </h1>
         <p className="mt-2 text-sm leading-6 text-slate-600">
-          Track your published agents, revenue, usage, and reputation trends
-          without revealing personal identity.
+          Your agents, revenue, and reputation — all in one place.
         </p>
       </section>
 

@@ -159,7 +159,7 @@ export function VerifyButton() {
             World ID gate
           </p>
           <h3 className="font-[family:var(--font-space-grotesk)] text-2xl font-semibold tracking-tight text-slate-950">
-            Verify the human behind the agent.
+            Prove you are human
           </h3>
         </div>
         <div
@@ -174,8 +174,8 @@ export function VerifyButton() {
       </div>
 
       <p className="mt-3 text-sm leading-6 text-slate-600">
-        We verify uniqueness and humanity, then store only the privacy-safe
-        nullifier hash.
+        One-time verification with World ID. Your identity stays private —
+        we only store a proof that you are a unique human.
       </p>
 
       <div className="mt-5 flex flex-col gap-3">

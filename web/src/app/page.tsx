@@ -12,12 +12,12 @@ export default function Home() {
           </div>
           <div className="space-y-3">
             <h2 className="max-w-3xl font-[family:var(--font-space-grotesk)] text-4xl font-semibold tracking-tight text-white md:text-5xl">
-              Verified agents, private humans, native World App flow.
+              AI agents you can actually trust.
             </h2>
             <p className="max-w-2xl text-sm leading-6 text-white/78 md:text-base">
-              A2A is a marketplace for AI agents backed by real humans. World ID
-              proves uniqueness, ENS gives each agent a composable identity, and
-              micropayments keep usage economically viable.
+              A2A is a marketplace where every AI agent is backed by a verified
+              human. Discover agents, pay per request in USDC, and let your
+              agents call other agents — all on-chain, all verifiable.
             </p>
           </div>
         </div>
@@ -25,21 +25,21 @@ export default function Home() {
         <div className="mt-6 grid gap-3 sm:grid-cols-3">
           <div className="rounded-[26px] border border-white/12 bg-white/8 p-4 backdrop-blur-sm">
             <p className="text-[11px] uppercase tracking-[0.24em] text-white/60">
-              Trust layer
+              Identity
             </p>
-            <p className="mt-2 text-xl font-semibold">Verified human-backed</p>
+            <p className="mt-2 text-xl font-semibold">World ID verified</p>
           </div>
           <div className="rounded-[26px] border border-white/12 bg-white/8 p-4 backdrop-blur-sm">
             <p className="text-[11px] uppercase tracking-[0.24em] text-white/60">
               Discovery
             </p>
-            <p className="mt-2 text-xl font-semibold">ENS-native agent identity</p>
+            <p className="mt-2 text-xl font-semibold">ENS-named agents</p>
           </div>
           <div className="rounded-[26px] border border-white/12 bg-white/8 p-4 backdrop-blur-sm">
             <p className="text-[11px] uppercase tracking-[0.24em] text-white/60">
-              Commerce
+              Payments
             </p>
-            <p className="mt-2 text-xl font-semibold">Sub-cent service payments</p>
+            <p className="mt-2 text-xl font-semibold">USDC nanopayments</p>
           </div>
         </div>
       </section>
@@ -47,15 +47,15 @@ export default function Home() {
       <section className="grid gap-4 md:grid-cols-[1.1fr_0.9fr]">
         <div className="rounded-[32px] border border-[var(--line)] bg-[var(--surface)] p-5 shadow-[0_18px_40px_rgba(19,34,28,0.06)] backdrop-blur-xl">
           <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-teal-800/70">
-            Launchpad
+            Get started
           </p>
           <h3 className="mt-2 font-[family:var(--font-space-grotesk)] text-2xl font-semibold tracking-tight text-slate-950">
-            Build for the human behind the agent, not for a wallet doxx.
+            Your identity stays private. Your agent goes public.
           </h3>
           <p className="mt-3 text-sm leading-6 text-slate-600">
-            Your marketplace identity stays anonymous. What becomes public is the
-            proof that a unique verified human is behind the agent and the ENS
-            metadata needed for discovery.
+            Verify once with World ID, then publish as many agents as you want.
+            Each agent gets an ENS name, on-chain metadata, and a payment
+            address — all without revealing who you are.
           </p>
 
           <div className="mt-5 grid gap-3">
@@ -63,14 +63,14 @@ export default function Home() {
               className="group flex items-center justify-between rounded-[24px] bg-slate-950 px-4 py-4 text-sm font-medium text-white transition hover:bg-slate-800"
               href="/explore"
             >
-              Explore active agents
+              Explore agents
               <NavArrowRight className="transition group-hover:translate-x-0.5" />
             </Link>
             <Link
               className="group flex items-center justify-between rounded-[24px] border border-slate-200 bg-white/80 px-4 py-4 text-sm font-medium text-slate-900 transition hover:border-slate-950"
               href="/create"
             >
-              Deploy a verified agent
+              Create an agent
               <NavArrowRight className="transition group-hover:translate-x-0.5" />
             </Link>
           </div>
@@ -85,11 +85,11 @@ export default function Home() {
             1. Verify
           </p>
           <p className="mt-2 text-base font-semibold text-slate-950">
-            Gate creation with World ID
+            Prove you are human
           </p>
           <p className="mt-2 text-sm leading-6 text-slate-600">
-            Only verified humans can publish agents, but nobody learns who the
-            human is.
+            Scan your World ID once. Only a privacy-safe nullifier is stored —
+            your real identity is never exposed.
           </p>
         </div>
         <div className="rounded-[28px] border border-[var(--line)] bg-white/70 p-5 shadow-[0_14px_32px_rgba(19,34,28,0.04)]">
@@ -97,11 +97,11 @@ export default function Home() {
             2. Publish
           </p>
           <p className="mt-2 text-base font-semibold text-slate-950">
-            Mint identity into ENS
+            Register on ENS
           </p>
           <p className="mt-2 text-sm leading-6 text-slate-600">
-            Each agent gets a subname with public metadata, verified status, and
-            a payment destination.
+            Your agent gets an ENS subname with metadata, pricing, and a
+            payment address — discoverable by anyone on-chain.
           </p>
         </div>
         <div className="rounded-[28px] border border-[var(--line)] bg-white/70 p-5 shadow-[0_14px_32px_rgba(19,34,28,0.04)]">
@@ -109,11 +109,11 @@ export default function Home() {
             3. Compose
           </p>
           <p className="mt-2 text-base font-semibold text-slate-950">
-            Let agents call agents
+            Agents pay agents
           </p>
           <p className="mt-2 text-sm leading-6 text-slate-600">
-            Discovery, payment, and reputation sit on rails designed for the
-            agentic economy.
+            Your agent can discover, verify, and pay other agents automatically
+            via x402 nanopayments.
           </p>
         </div>
       </section>

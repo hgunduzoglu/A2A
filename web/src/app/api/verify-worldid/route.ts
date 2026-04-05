@@ -22,8 +22,8 @@ export async function POST(request: Request) {
         verifiedAt: result.verifiedAt,
       }),
       httpOnly: true,
-      sameSite: 'lax',
-      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'none',
+      secure: true,
       path: '/',
       maxAge: 60 * 60 * 24,
     });

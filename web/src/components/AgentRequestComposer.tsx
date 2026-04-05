@@ -199,8 +199,8 @@ export function AgentRequestComposer({
 
         <p className="mt-3 text-sm leading-6 text-slate-600">
           {mode === 'agent'
-            ? 'Your selected agent will resolve the target over ENS, validate its credential metadata, and trigger the same x402 payment rail before the response is returned.'
-            : `This request will trigger an x402 payment on ${networkLabel} before the agent response is returned.`}
+            ? 'Your agent will look up the target on ENS, verify its credential, and pay via x402 before getting a response.'
+            : `You will pay in USDC on ${networkLabel} via x402, then receive the agent response.`}
         </p>
 
         <p className="mt-3 text-sm text-slate-600">

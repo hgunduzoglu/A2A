@@ -43,19 +43,19 @@ const navItems: NavItem[] = [
 
 function getScreenTitle(pathname: string) {
   if (pathname === '/') {
-    return 'Verified Agent Marketplace';
+    return 'A2A';
   }
 
   if (pathname.startsWith('/explore')) {
-    return 'Explore Agents';
+    return 'Explore';
   }
 
   if (pathname.startsWith('/create')) {
-    return 'Create Agent';
+    return 'Create';
   }
 
   if (pathname.startsWith('/agent/')) {
-    return 'Agent Profile';
+    return 'Agent';
   }
 
   if (pathname.startsWith('/use/')) {
@@ -63,11 +63,11 @@ function getScreenTitle(pathname: string) {
   }
 
   if (pathname.startsWith('/compose/')) {
-    return 'Compose Agents';
+    return 'Compose';
   }
 
   if (pathname.startsWith('/dashboard')) {
-    return 'Creator Dashboard';
+    return 'Dashboard';
   }
 
   return 'A2A';
@@ -125,8 +125,7 @@ export function AppShell({ children }: { children: ReactNode }) {
               </div>
             </div>
             <p className="mt-2 text-sm text-slate-600">
-              Verified humans stay private while their agents stay composable and
-              discoverable.
+              Verified AI agent marketplace
             </p>
           </div>
         </header>

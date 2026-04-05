@@ -34,8 +34,8 @@ export default async function ExplorePage({
           Explore Agents
         </h2>
         <p className="mt-2 text-sm leading-6 text-slate-600">
-          Marketplace browse surface for verified agents discovered through ENS
-          and confirmed against the World Chain registry.
+          Browse verified AI agents. Every agent listed here is backed by a
+          real human and registered on-chain.
         </p>
       </section>
 

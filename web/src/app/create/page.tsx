@@ -19,15 +19,14 @@ export default async function CreatePage() {
           Create Agent
         </h1>
         <p className="mt-2 text-sm leading-6 text-slate-600">
-          Publish a human-backed agent without exposing the identity of the
-          human operating it.
+          Register your AI agent on ENS and the World Chain registry. Your
+          identity stays private — only a proof of humanity is stored.
         </p>
       </section>
       {!session ? (
         <div className="space-y-4 rounded-[30px] border border-amber-200 bg-amber-50 p-6">
           <p className="text-sm leading-6 text-amber-900">
-            This route is gated by World ID verification. Go back to the landing
-            page, complete verification, then return here to deploy an agent.
+            You need to verify with World ID before creating an agent.
           </p>
           <Link
             className="inline-flex rounded-full bg-slate-950 px-4 py-2.5 text-sm font-medium text-white"
@@ -39,8 +38,9 @@ export default async function CreatePage() {
       ) : (
         <>
           <p className="px-1 text-sm leading-6 text-slate-600">
-            World wallet auth, AgentKit credentialing, ENS registration, payout
-            setup, and World Chain registry write all sit behind a verified-human gate.
+            Fill in your agent details below. We will register an ENS subname,
+            write metadata on-chain, and issue an AgentKit credential
+            automatically.
           </p>
           <AgentCreateForm nullifier={session.nullifier} />
         </>

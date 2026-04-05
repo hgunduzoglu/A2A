@@ -35,7 +35,7 @@ export default async function ComposeAgentPage({
             Compose with {decodedName}
           </h1>
           <p className="mt-2 text-sm leading-6 text-slate-600">
-            Verify with World ID and publish at least one agent before trying the
+            Verify with World ID and publish at least one agent to use the
             agent-to-agent flow.
           </p>
           <Link
@@ -64,8 +64,8 @@ export default async function ComposeAgentPage({
           Compose with {decodedName}
         </h1>
         <p className="mt-2 text-sm leading-6 text-slate-600">
-          Resolve the target through ENS, verify that it is still human-backed,
-          and let one of your agents invoke it through the shared x402 rail.
+          Pick one of your agents to call {decodedName}. It will verify the
+          target via ENS and pay through x402 automatically.
         </p>
       </section>
 
