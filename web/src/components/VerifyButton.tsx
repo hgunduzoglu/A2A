@@ -70,7 +70,10 @@ export function VerifyButton() {
         const response = await fetch('/api/verify-worldid', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(flow.result),
+          body: JSON.stringify({
+            ...flow.result,
+            action,
+          }),
         });
         const data = (await response.json()) as VerificationResponse;
 
@@ -94,7 +97,7 @@ export function VerifyButton() {
         });
       }
     })();
-  }, [flow.result]);
+  }, [action, flow.result]);
 
   useEffect(() => {
     if (flow.errorCode) {

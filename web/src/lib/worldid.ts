@@ -125,6 +125,16 @@ export async function verifyWorldIdProof(
   payload: IDKitResult | Record<string, unknown>,
 ): Promise<WorldIdVerificationResponse> {
   const config = getWorldIdConfig();
+  const verificationPayload =
+    typeof payload === 'object' && payload !== null
+      ? {
+          ...payload,
+          action:
+            'action' in payload && typeof payload.action === 'string'
+              ? payload.action
+              : config.action,
+        }
+      : payload;
 
   if (!config.rpId) {
     return {
@@ -133,11 +143,13 @@ export async function verifyWorldIdProof(
       message:
         'World ID credentials are not configured yet. Returning mock verification.',
       nullifier:
-        typeof payload === 'object' && payload && 'mockNullifier' in payload
-          ? String(payload.mockNullifier)
+        typeof verificationPayload === 'object' &&
+        verificationPayload &&
+        'mockNullifier' in verificationPayload
+          ? String(verificationPayload.mockNullifier)
           : 'mock-nullifier',
       verifiedAt: new Date().toISOString(),
-      raw: payload,
+      raw: verificationPayload,
     };
   }
 
@@ -149,13 +161,13 @@ export async function verifyWorldIdProof(
         'Content-Type': 'application/json',
         'User-Agent': 'A2A/0.1',
       },
-      body: JSON.stringify(payload),
+      body: JSON.stringify(verificationPayload),
       cache: 'no-store',
     },
   );
 
   const raw = await response.json().catch(() => null);
-  const result = payload as IDKitResult;
+  const result = verificationPayload as IDKitResult;
   const nullifier = getFirstNullifier(result);
   const ok =
     response.ok &&
