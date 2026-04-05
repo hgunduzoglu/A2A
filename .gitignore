@@ -12,3 +12,4 @@ cache/
 !.env.example
 !.env.sample
 node_modules/
+*.pdf

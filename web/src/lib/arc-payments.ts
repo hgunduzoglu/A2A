@@ -383,9 +383,13 @@ async function invokeAgentEndpoint(
 }
 
 export function getX402ClientConfig() {
+  const config = getX402Config();
+  const chainId = Number(config.network.split(':')[1]) || 84532;
+
   return {
-    network: getX402Config().network as `${string}:${string}`,
-    chainId: 84532,
+    network: config.network as `${string}:${string}`,
+    chainId,
+    networkLabel: process.env.NEXT_PUBLIC_X402_NETWORK_LABEL ?? 'Base Sepolia',
   };
 }
 

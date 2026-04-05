@@ -35,6 +35,8 @@ const AGENT_TEXT_RECORD_KEYS = [
   'agent-currency',
   'payment-address',
   'agent-endpoint',
+  'agent-rating',
+  'agent-review-count',
 ] as const;
 
 function getEnsConfig() {
@@ -198,6 +200,46 @@ export async function registerAgentSubname(input: AgentRegistrationInput) {
     createHash,
     textRecordTransactionHashes,
     textRecords,
+  };
+}
+
+export async function updateAgentRatingRecords(
+  name: string,
+  avgRating: string,
+  reviewCount: number,
+) {
+  const clients = getEnsClients();
+
+  if (!clients) {
+    return { provider: 'ens', mode: 'stub' };
+  }
+
+  const node = namehash(name);
+  const records = [
+    ['agent-rating', avgRating],
+    ['agent-review-count', String(reviewCount)],
+  ] as const;
+
+  const hashes: `0x${string}`[] = [];
+
+  for (const [key, value] of records) {
+    const hash = await clients.walletClient.writeContract({
+      address: PublicResolver.address as `0x${string}`,
+      abi: PublicResolver.abi,
+      functionName: 'setText',
+      args: [node, key, value],
+    });
+
+    hashes.push(hash);
+    await clients.publicClient.waitForTransactionReceipt({ hash });
+  }
+
+  return {
+    provider: 'ens',
+    mode: 'live',
+    ensName: name,
+    records,
+    transactionHashes: hashes,
   };
 }
 

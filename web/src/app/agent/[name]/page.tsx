@@ -1,7 +1,9 @@
 import { ReputationBadge } from '@/components/ReputationBadge';
+import { ReviewForm } from '@/components/ReviewForm';
+import { ReviewList } from '@/components/ReviewList';
 import { getAgentListingByEnsName } from '@/lib/agents';
 import { resolveAgentProfile } from '@/lib/ens';
-import { getAgentReputation } from '@/lib/hedera';
+import { getAgentReputation, getAgentReviews } from '@/lib/hedera';
 import { getRegisteredAgentFromWorldChain } from '@/lib/worldchain';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
@@ -22,8 +24,11 @@ export default async function AgentDetailPage({
     notFound();
   }
 
-  const ensProfile = await resolveAgentProfile(decodedName);
-  const reputation = await getAgentReputation(decodedName);
+  const [ensProfile, reputation, reviewData] = await Promise.all([
+    resolveAgentProfile(decodedName),
+    getAgentReputation(decodedName),
+    getAgentReviews(decodedName),
+  ]);
   const records =
     typeof ensProfile === 'object' &&
     ensProfile !== null &&
@@ -197,6 +202,19 @@ export default async function AgentDetailPage({
           </span>
         </div>
       </section>
+
+      <section className="grid gap-4 rounded-[30px] border border-[var(--line)] bg-[var(--surface)] p-6 shadow-[0_18px_40px_rgba(19,34,28,0.06)] backdrop-blur-xl">
+        <h2 className="text-lg font-semibold text-slate-950">
+          Reviews
+        </h2>
+        <ReviewList
+          avgRating={reviewData.avgRating}
+          reviewCount={reviewData.reviewCount}
+          reviews={reviewData.reviews}
+        />
+      </section>
+
+      <ReviewForm agentName={decodedName} />
 
       <section className="grid gap-4 rounded-[30px] border border-[var(--line)] bg-[var(--surface)] p-6 shadow-[0_18px_40px_rgba(19,34,28,0.06)] backdrop-blur-xl">
         <h2 className="text-lg font-semibold text-slate-950">

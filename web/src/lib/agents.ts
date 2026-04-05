@@ -20,6 +20,8 @@ export interface AgentListing {
   verificationLevel: string;
   credentialHash: string | null;
   paymentAddress: string | null;
+  ensRating: string | null;
+  ensReviewCount: number;
 }
 
 type EnsRecords = Record<string, string>;
@@ -79,6 +81,8 @@ function buildAgentListing(
     credentialHash:
       records['agent-credential'] || agent.credentialHash || null,
     paymentAddress: records['payment-address'] || null,
+    ensRating: records['agent-rating'] || null,
+    ensReviewCount: Number(records['agent-review-count'] || '0') || 0,
   };
 }
 

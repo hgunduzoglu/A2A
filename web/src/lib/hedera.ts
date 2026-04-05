@@ -326,3 +326,140 @@ export async function getAgentReputation(agentName: string) {
   const metrics = await getAgentReputationMap([agentName]);
   return metrics.get(agentName) ?? createEmptyMetrics(agentName, 'stub');
 }
+
+export interface AgentReviewInput {
+  agent: string;
+  reviewerNullifier: string;
+  rating: number;
+  comment: string;
+}
+
+export interface AgentReview {
+  agent: string;
+  reviewerNullifier: string;
+  rating: number;
+  comment: string;
+  createdAt: string;
+}
+
+export async function submitAgentReview(input: AgentReviewInput) {
+  const event = {
+    version: 1,
+    type: 'agent_reviewed',
+    agent: input.agent,
+    reviewerNullifier: input.reviewerNullifier,
+    rating: Math.max(1, Math.min(5, Math.round(input.rating))),
+    comment: input.comment.trim().slice(0, 500),
+    createdAt: new Date().toISOString(),
+  };
+
+  if (!hasLiveHederaConfig()) {
+    return {
+      provider: 'hedera',
+      mode: 'stub' as const,
+      event,
+    };
+  }
+
+  const client = createHederaClient();
+
+  if (!client) {
+    return {
+      provider: 'hedera',
+      mode: 'stub' as const,
+      event,
+    };
+  }
+
+  try {
+    const config = getHederaConfig();
+    const response = await new TopicMessageSubmitTransaction()
+      .setTopicId(TopicId.fromString(config.topicId!))
+      .setMessage(JSON.stringify(event))
+      .execute(client);
+    const receipt = await response.getReceipt(client);
+
+    return {
+      provider: 'hedera',
+      mode: 'live' as const,
+      topicId: config.topicId,
+      transactionId: response.transactionId.toString(),
+      topicSequenceNumber:
+        typeof receipt.topicSequenceNumber !== 'undefined'
+          ? String(receipt.topicSequenceNumber)
+          : null,
+      event,
+    };
+  } finally {
+    client.close();
+  }
+}
+
+export async function getAgentReviews(agentName: string): Promise<{
+  reviews: AgentReview[];
+  avgRating: string;
+  reviewCount: number;
+  mode: HederaMode;
+}> {
+  if (!hasLiveHederaConfig()) {
+    return { reviews: [], avgRating: '0', reviewCount: 0, mode: 'stub' };
+  }
+
+  try {
+    const messages = await fetchTopicMessages();
+    const reviewsByNullifier = new Map<string, AgentReview>();
+
+    for (const record of messages) {
+      const decoded = decodeMirrorMessage(record);
+
+      if (
+        !decoded ||
+        decoded.type !== 'agent_reviewed' ||
+        decoded.agent !== agentName
+      ) {
+        continue;
+      }
+
+      const review = decoded as unknown as {
+        agent: string;
+        reviewerNullifier?: string;
+        rating?: number;
+        comment?: string;
+        createdAt?: string;
+      };
+
+      if (!review.reviewerNullifier || !review.rating) {
+        continue;
+      }
+
+      if (!reviewsByNullifier.has(review.reviewerNullifier)) {
+        reviewsByNullifier.set(review.reviewerNullifier, {
+          agent: agentName,
+          reviewerNullifier: review.reviewerNullifier,
+          rating: Math.max(1, Math.min(5, review.rating)),
+          comment: review.comment ?? '',
+          createdAt:
+            review.createdAt ??
+            (record.consensus_timestamp
+              ? new Date(
+                  Number.parseFloat(record.consensus_timestamp) * 1000,
+                ).toISOString()
+              : new Date().toISOString()),
+        });
+      }
+    }
+
+    const reviews = [...reviewsByNullifier.values()];
+    const reviewCount = reviews.length;
+    const avgRating =
+      reviewCount > 0
+        ? (
+            reviews.reduce((sum, r) => sum + r.rating, 0) / reviewCount
+          ).toFixed(1)
+        : '0';
+
+    return { reviews, avgRating, reviewCount, mode: 'live' };
+  } catch {
+    return { reviews: [], avgRating: '0', reviewCount: 0, mode: 'stub' };
+  }
+}

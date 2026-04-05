@@ -77,7 +77,8 @@ export default async function ExplorePage({
               description={agent.description}
               name={agent.ensName}
               price={`$${agent.priceUsdc} / request`}
-              reputation={metrics?.rating ?? '4.50'}
+              reputation={metrics?.rating ?? agent.ensRating ?? '4.50'}
+              reviewCount={agent.ensReviewCount}
             />
             );
           })}

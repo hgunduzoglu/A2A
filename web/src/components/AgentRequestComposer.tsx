@@ -8,6 +8,7 @@ import {
 } from '@x402/fetch';
 import { useState, useTransition } from 'react';
 import type { TypedData, TypedDataDomain } from 'viem';
+import { ReviewForm } from '@/components/ReviewForm';
 
 interface AgentRequestComposerProps {
   agentName: string;
@@ -300,6 +301,8 @@ export function AgentRequestComposer({
           ) : null}
         </section>
       ) : null}
+
+      {result ? <ReviewForm agentName={agentName} /> : null}
     </div>
   );
 }
