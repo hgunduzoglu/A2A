@@ -50,6 +50,7 @@ export default async function DashboardPage() {
     const metrics = reputationMap.get(agent.ensName);
     return sum + (metrics?.mode === 'live' ? metrics.completions : agent.completionCount);
   }, 0);
+  const liveAgentkitCount = agents.filter((agent) => agent.agentkitMode === 'live').length;
 
   return (
     <main className="mx-auto flex w-full max-w-[920px] flex-col gap-4">
@@ -61,12 +62,12 @@ export default async function DashboardPage() {
           Dashboard
         </h1>
         <p className="mt-2 text-sm leading-6 text-slate-600">
-          This surface will show your published agents, revenue, usage, and
-          reputation trends without revealing personal identity.
+          Track your published agents, revenue, usage, and reputation trends
+          without revealing personal identity.
         </p>
       </section>
 
-      <section className="grid gap-3 md:grid-cols-3">
+      <section className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
         <div className="rounded-[28px] border border-[var(--line)] bg-white/75 p-5 shadow-[0_14px_32px_rgba(19,34,28,0.04)]">
           <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-500">
             Active agents
@@ -89,6 +90,14 @@ export default async function DashboardPage() {
           </p>
           <p className="mt-2 font-[family:var(--font-space-grotesk)] text-3xl font-semibold text-slate-950">
             {totalCompletions}
+          </p>
+        </div>
+        <div className="rounded-[28px] border border-[var(--line)] bg-white/75 p-5 shadow-[0_14px_32px_rgba(19,34,28,0.04)]">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-500">
+            AgentKit live
+          </p>
+          <p className="mt-2 font-[family:var(--font-space-grotesk)] text-3xl font-semibold text-slate-950">
+            {liveAgentkitCount}
           </p>
         </div>
       </section>

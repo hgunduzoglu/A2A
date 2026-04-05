@@ -41,6 +41,25 @@ type RegisterAgentResponse = {
     indexedAt: string;
     agentCountForHuman: number;
   };
+  credential?: {
+    mode?: string;
+    credentialHash?: string;
+    chainId?: string;
+    humanLookup?: string;
+    verifiedAt?: string;
+  };
+};
+
+type AgentkitContextResponse = {
+  ok: boolean;
+  message?: string;
+  ensName?: string;
+  auth?: {
+    nonce: string;
+    statement?: string;
+    requestId?: string;
+    expirationTime?: string;
+  };
 };
 
 const initialState: AgentFormState = {
@@ -85,23 +104,77 @@ export function AgentCreateForm({ nullifier }: AgentCreateFormProps) {
         });
       } catch {}
 
-      const response = await fetch('/api/register-agent', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          ...form,
-          capabilities: form.capabilities
-            .split(',')
-            .map((value) => value.trim())
-            .filter(Boolean),
-        }),
-      });
+      try {
+        const contextResponse = await fetch('/api/agentkit-context', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            name: form.name,
+          }),
+        });
+        const contextPayload =
+          (await contextResponse.json()) as AgentkitContextResponse;
 
-      const payload = (await response.json()) as RegisterAgentResponse;
+        if (
+          !contextResponse.ok ||
+          !contextPayload.ok ||
+          !contextPayload.auth?.nonce
+        ) {
+          throw new Error(
+            contextPayload.message ??
+              'Unable to prepare the AgentKit signature challenge.',
+          );
+        }
 
-      if (!response.ok || !payload.ok) {
+        const walletAuthResult = await MiniKit.walletAuth({
+          nonce: contextPayload.auth.nonce,
+          statement: contextPayload.auth.statement,
+          requestId: contextPayload.auth.requestId,
+          expirationTime: contextPayload.auth.expirationTime
+            ? new Date(contextPayload.auth.expirationTime)
+            : undefined,
+        });
+
+        const response = await fetch('/api/register-agent', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            ...form,
+            capabilities: form.capabilities
+              .split(',')
+              .map((value) => value.trim())
+              .filter(Boolean),
+            agentkitAuth: walletAuthResult.data,
+          }),
+        });
+
+        const payload = (await response.json()) as RegisterAgentResponse;
+
+        if (!response.ok || !payload.ok) {
+          try {
+            await MiniKit.sendHapticFeedback({
+              hapticsType: 'notification',
+              style: 'error',
+            });
+          } catch {}
+
+          setError(payload.message ?? 'Unable to register agent.');
+          return;
+        }
+
+        try {
+          await MiniKit.sendHapticFeedback({
+            hapticsType: 'notification',
+            style: 'success',
+          });
+        } catch {}
+
+        setResult(payload);
+      } catch (submitError) {
         try {
           await MiniKit.sendHapticFeedback({
             hapticsType: 'notification',
@@ -109,18 +182,12 @@ export function AgentCreateForm({ nullifier }: AgentCreateFormProps) {
           });
         } catch {}
 
-        setError(payload.message ?? 'Unable to register agent.');
-        return;
+        setError(
+          submitError instanceof Error
+            ? submitError.message
+            : 'Unable to create the AgentKit credential.',
+        );
       }
-
-      try {
-        await MiniKit.sendHapticFeedback({
-          hapticsType: 'notification',
-          style: 'success',
-        });
-      } catch {}
-
-      setResult(payload);
     });
   }
 
@@ -152,6 +219,10 @@ export function AgentCreateForm({ nullifier }: AgentCreateFormProps) {
       <div className="rounded-[28px] border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-900">
         Verified human session is active.
         <div className="mt-2 break-all font-mono text-xs">{nullifier}</div>
+        <p className="mt-3 text-xs leading-5 text-emerald-800/80">
+          Deploying an agent will also prompt a World wallet signature so we can
+          mint a live AgentKit credential tied to this anonymous World ID session.
+        </p>
       </div>
 
       <form
@@ -304,6 +375,20 @@ export function AgentCreateForm({ nullifier }: AgentCreateFormProps) {
           {result.registryRecord?.contractAddress ? (
             <p className="break-all">
               AgentRegistry: {result.registryRecord.contractAddress}
+            </p>
+          ) : null}
+          {result.credential?.credentialHash ? (
+            <p className="break-all">
+              AgentKit credential: {result.credential.mode ?? 'unknown'} •{' '}
+              {result.credential.credentialHash}
+            </p>
+          ) : null}
+          {result.credential?.humanLookup ? (
+            <p>
+              AgentBook lookup:{' '}
+              {result.credential.humanLookup === 'found'
+                ? 'human-backed wallet found'
+                : 'signature verified, no public AgentBook link yet'}
             </p>
           ) : null}
         </div>

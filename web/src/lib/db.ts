@@ -51,6 +51,9 @@ export async function ensureDatabaseSchema() {
         payment_address TEXT,
         registry_contract_address TEXT,
         registry_tx_hash TEXT,
+        agentkit_mode TEXT NOT NULL DEFAULT 'stub',
+        agentkit_human_id TEXT,
+        agentkit_verified_at TIMESTAMPTZ,
         registration_mode TEXT NOT NULL DEFAULT 'live',
         status TEXT NOT NULL DEFAULT 'active',
         completion_count INTEGER NOT NULL DEFAULT 0,
@@ -64,6 +67,15 @@ export async function ensureDatabaseSchema() {
 
       ALTER TABLE agent_listings
         ADD COLUMN IF NOT EXISTS registry_tx_hash TEXT;
+
+      ALTER TABLE agent_listings
+        ADD COLUMN IF NOT EXISTS agentkit_mode TEXT NOT NULL DEFAULT 'stub';
+
+      ALTER TABLE agent_listings
+        ADD COLUMN IF NOT EXISTS agentkit_human_id TEXT;
+
+      ALTER TABLE agent_listings
+        ADD COLUMN IF NOT EXISTS agentkit_verified_at TIMESTAMPTZ;
 
       CREATE INDEX IF NOT EXISTS idx_agent_listings_category
         ON agent_listings (category);

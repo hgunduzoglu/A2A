@@ -1,4 +1,5 @@
 import { createAgentCredential } from '@/lib/agentkit';
+import { toAgentEnsName } from '@/lib/agents';
 import { registerAgentSubname } from '@/lib/ens';
 import {
   getAgentCountForHuman,
@@ -36,11 +37,10 @@ export async function POST(request: Request) {
     typeof payload.paymentAddress === 'string' && isAddress(payload.paymentAddress)
       ? payload.paymentAddress
       : undefined;
-  const agentName =
-    typeof payload.name === 'string' && payload.name.trim().length > 0
-      ? payload.name.trim()
-      : 'unnamed-agent';
-  const ensName = `${agentName.toLowerCase().replace(/\s+/g, '')}.${parentDomain}`;
+  const { agentName, ensName } = toAgentEnsName(
+    typeof payload.name === 'string' ? payload.name : '',
+    parentDomain,
+  );
   const existingListing = await getAgentListingByEnsName(ensName);
 
   if (existingListing) {
@@ -71,7 +71,27 @@ export async function POST(request: Request) {
     nullifier: session.nullifier,
     paymentAddress,
   };
-  const credential = await createAgentCredential(enrichedPayload);
+  let credential;
+
+  try {
+    credential = await createAgentCredential({
+      walletAuth: payload.agentkitAuth,
+      worldNullifierHash: session.nullifier,
+      ensName,
+    });
+  } catch (error) {
+    return NextResponse.json(
+      {
+        ok: false,
+        message:
+          error instanceof Error
+            ? error.message
+            : 'Unable to create the AgentKit credential.',
+      },
+      { status: 400 },
+    );
+  }
+
   const ensRecord = await registerAgentSubname({
     ...enrichedPayload,
     credentialHash:
@@ -166,6 +186,27 @@ export async function POST(request: Request) {
       typeof registryRecord.txHash === 'string'
         ? registryRecord.txHash
         : null,
+    agentkitMode:
+      typeof credential === 'object' &&
+      credential !== null &&
+      'mode' in credential &&
+      typeof credential.mode === 'string'
+        ? credential.mode
+        : 'stub',
+    agentkitHumanId:
+      typeof credential === 'object' &&
+      credential !== null &&
+      'humanId' in credential &&
+      typeof credential.humanId === 'string'
+        ? credential.humanId
+        : null,
+    agentkitVerifiedAt:
+      typeof credential === 'object' &&
+      credential !== null &&
+      'verifiedAt' in credential &&
+      typeof credential.verifiedAt === 'string'
+        ? credential.verifiedAt
+        : null,
     registrationMode:
       typeof registryRecord === 'object' &&
       registryRecord !== null &&
@@ -184,8 +225,8 @@ export async function POST(request: Request) {
     ok: true,
     message:
       registryRecord.mode === 'live'
-        ? 'Agent registered on ENS, World Chain, and the marketplace index.'
-        : 'Agent registered on ENS and indexed for marketplace discovery. World Chain deploy address is still missing.',
+        ? 'Agent registered with AgentKit, ENS, World Chain, and the marketplace index.'
+        : 'Agent registered with AgentKit and ENS, then indexed for marketplace discovery. World Chain deploy address is still missing.',
     agent: {
       ensName,
       category: payload.category,

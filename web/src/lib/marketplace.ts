@@ -20,6 +20,9 @@ interface AgentListingRow {
   payment_address: string | null;
   registry_contract_address: string | null;
   registry_tx_hash: string | null;
+  agentkit_mode: string;
+  agentkit_human_id: string | null;
+  agentkit_verified_at: Date | null;
   registration_mode: string;
   status: string;
   completion_count: number;
@@ -48,6 +51,9 @@ export interface AgentListing {
   paymentAddress: string | null;
   registryContractAddress: string | null;
   registryTxHash: string | null;
+  agentkitMode: string;
+  agentkitHumanId: string | null;
+  agentkitVerifiedAt: string | null;
   registrationMode: string;
   status: string;
   completionCount: number;
@@ -74,6 +80,9 @@ export interface SaveAgentListingInput {
   paymentAddress?: string | null;
   registryContractAddress?: string | null;
   registryTxHash?: string | null;
+  agentkitMode?: string;
+  agentkitHumanId?: string | null;
+  agentkitVerifiedAt?: string | null;
   registrationMode?: string;
 }
 
@@ -111,6 +120,9 @@ function mapAgentListing(row: AgentListingRow): AgentListing {
     paymentAddress: row.payment_address,
     registryContractAddress: row.registry_contract_address,
     registryTxHash: row.registry_tx_hash,
+    agentkitMode: row.agentkit_mode,
+    agentkitHumanId: row.agentkit_human_id,
+    agentkitVerifiedAt: row.agentkit_verified_at?.toISOString() ?? null,
     registrationMode: row.registration_mode,
     status: row.status,
     completionCount: row.completion_count,
@@ -217,6 +229,9 @@ export async function saveAgentListing(input: SaveAgentListingInput) {
         payment_address,
         registry_contract_address,
         registry_tx_hash,
+        agentkit_mode,
+        agentkit_human_id,
+        agentkit_verified_at,
         registration_mode,
         updated_at
       )
@@ -239,6 +254,9 @@ export async function saveAgentListing(input: SaveAgentListingInput) {
         $16,
         $17,
         $18,
+        $19,
+        $20,
+        $21,
         NOW()
       )
       ON CONFLICT (ens_name) DO UPDATE SET
@@ -257,6 +275,9 @@ export async function saveAgentListing(input: SaveAgentListingInput) {
         payment_address = EXCLUDED.payment_address,
         registry_contract_address = EXCLUDED.registry_contract_address,
         registry_tx_hash = EXCLUDED.registry_tx_hash,
+        agentkit_mode = EXCLUDED.agentkit_mode,
+        agentkit_human_id = EXCLUDED.agentkit_human_id,
+        agentkit_verified_at = EXCLUDED.agentkit_verified_at,
         registration_mode = EXCLUDED.registration_mode,
         updated_at = NOW()
       RETURNING *
@@ -279,6 +300,9 @@ export async function saveAgentListing(input: SaveAgentListingInput) {
       input.paymentAddress ?? null,
       input.registryContractAddress ?? null,
       input.registryTxHash ?? null,
+      input.agentkitMode ?? 'stub',
+      input.agentkitHumanId ?? null,
+      input.agentkitVerifiedAt ?? null,
       input.registrationMode ?? 'live',
     ],
   );

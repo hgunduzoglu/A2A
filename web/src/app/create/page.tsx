@@ -39,8 +39,8 @@ export default async function CreatePage() {
       ) : (
         <>
           <p className="px-1 text-sm leading-6 text-slate-600">
-            AgentKit, ENS registration, payout setup, and World Chain registry
-            write now sit behind a verified-human gate.
+            World wallet auth, AgentKit credentialing, ENS registration, payout
+            setup, and World Chain registry write all sit behind a verified-human gate.
           </p>
           <AgentCreateForm nullifier={session.nullifier} />
         </>

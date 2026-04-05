@@ -74,6 +74,9 @@ export default async function AgentDetailPage({
     agent?.credentialHash ??
     registryAgent?.credentialHash ??
     null;
+  const agentkitMode = agent?.agentkitMode ?? 'stub';
+  const agentkitVerifiedAt = agent?.agentkitVerifiedAt ?? null;
+  const agentkitHumanLookup = agent?.agentkitHumanId ? 'found' : 'not_found';
   const nullifierMatchesRegistry = Boolean(
     registryAgent && worldNullifier && registryAgent.nullifierHash === worldNullifier,
   );
@@ -212,6 +215,36 @@ export default async function AgentDetailPage({
             {isLiveReputation ? reputation.rating : (agent?.reputationScore ?? '4.50')} rating
             {' • '}
             {isLiveReputation ? reputation.completions : (agent?.completionCount ?? 0)} completions
+          </span>
+        </div>
+        <div className="grid gap-1">
+          <span className="text-sm uppercase tracking-[0.2em] text-slate-500">
+            AgentKit credential
+          </span>
+          <span className="text-slate-900">
+            {agentkitMode === 'live'
+              ? 'World wallet signature verified'
+              : 'Credential metadata unavailable'}
+          </span>
+        </div>
+        <div className="grid gap-1">
+          <span className="text-sm uppercase tracking-[0.2em] text-slate-500">
+            AgentBook lookup
+          </span>
+          <span className="text-slate-900">
+            {agentkitHumanLookup === 'found'
+              ? 'World AgentBook human link found'
+              : 'World ID-linked credential only'}
+          </span>
+        </div>
+        <div className="grid gap-1">
+          <span className="text-sm uppercase tracking-[0.2em] text-slate-500">
+            AgentKit verified at
+          </span>
+          <span className="text-slate-900">
+            {agentkitVerifiedAt
+              ? new Date(agentkitVerifiedAt).toLocaleString('en-US')
+              : 'Not available'}
           </span>
         </div>
       </section>
