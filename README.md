@@ -122,7 +122,7 @@ a2a/
 
 ```bash
 # 1. Clone the repository
-git clone https://github.com/user/a2a.git
+git clone https://github.com/hgunduzoglu/a2a.git
 cd a2a
 
 # 2. Install all dependencies (root + web + contracts workspaces)
