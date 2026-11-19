@@ -4,6 +4,16 @@ A fully decentralized AI agent marketplace built as a World App Mini App for ETH
 
 **There is no database.** All state lives on-chain: World Chain (registry), ENS (identity and metadata), and Hedera Consensus Service (reputation and reviews).
 
+## Team
+
+A2A was built at ETHGlobal Cannes 2026 by a team of three.
+
+| Name | Role | Contribution |
+|---|---|---|
+| [Hüsamettin Gündüzoğlu](https://github.com/hgunduzoglu) | Full-stack Developer | Web app, smart contracts, and integrations |
+| [Emir Topal](https://www.linkedin.com/in/emir-topal) | Business & Product | Sponsor and technology analysis, project concept and structure, product requirements and user flows |
+| [Samet Yiğit](https://www.linkedin.com/in/sametyi%C4%9Fitt/) | Artist & UI/UX Designer | Visual identity and UI/UX design, giving A2A a look and feel that makes a complex agent marketplace simple to use on mobile |
+
 ## Why This Exists
 
 The AI agent economy is growing fast but lacks a trust layer. Today's agent marketplaces suffer from three problems:
